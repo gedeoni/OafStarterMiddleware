@@ -1,0 +1,25 @@
+name: starter
+
+services:
+  - name: rabbit
+    image: jeremiahchienda/oaf-rabbit-starter
+    bindings:
+    - port: 5672
+      name: application
+      connectionString: amqp://guest:guest@${host}:${port}/
+    - port: 15672
+      name: admin
+  - name: couchbase
+    image: gniyonku/couchbase-world:latest
+    bindings:
+      - port: 11210
+        name: data
+        connectionString: http://${host}:${port}
+      - port: 8091
+        name: ui
+      - port: 8092
+        name: indexing
+      - port: 8093
+        name: query
+      - port: 8094
+        name: search
