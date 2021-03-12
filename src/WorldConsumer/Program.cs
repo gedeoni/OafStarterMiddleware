@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
 using Application;
 using Infrastructure;
 using Microsoft.Extensions.Configuration;
@@ -9,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using sdk;
 using sdk.Options;
+using Serilog;
 
 namespace WorldConsumer
 {
@@ -22,6 +21,7 @@ namespace WorldConsumer
         private static IHostBuilder CreateHostBuilder(string[] args)
         {
             return Host.CreateDefaultBuilder(args)
+                .UseSerilog((hostContext, config) => { config.ReadFrom.Configuration(hostContext.Configuration); })
                 .ConfigureHostConfiguration(configHost =>
                 {
                     configHost.SetBasePath($"{Directory.GetParent(Directory.GetCurrentDirectory()).FullName}/config");
