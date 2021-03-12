@@ -5,6 +5,6 @@ namespace Application.Common.Interfaces
 {
     public interface IPublishEvent
     {
-        Task PublishEvent(object payload, string routingKey);
+        Task PublishEvent(EventBusPayload payload, string routingKey);
     }
 }

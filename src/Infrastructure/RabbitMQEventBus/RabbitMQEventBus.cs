@@ -18,7 +18,7 @@ namespace Infrastructure.RabbitMqEventBus
             _config = config;
         }
 
-        public async Task PublishEvent(object payload, string routingKey)
+        public async Task PublishEvent(EventBusPayload payload, string routingKey)
         {
             await _messagePublisher.PublishMessageAsync(payload,routingKey);
         }

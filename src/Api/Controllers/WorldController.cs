@@ -26,13 +26,13 @@ namespace Api.Controllers
         [HttpGet]
         async public Task<List<World>> Index()
         {
-            _logger.LogInformation("Getting a list of worlds");
             return await _mediator.Send(new GetAllWorlds()).ConfigureAwait(false);
         }
 
         [HttpPost]
         public async Task<World> Create(CreateWorldDto createWorldDto)
         {
+            _logger.LogInformation($"{new {Entity=createWorldDto, Message="Received Post world request"}}");
             return await _mediator.Send(new CreateWorldComand(createWorldDto)).ConfigureAwait(false);
         }
     }

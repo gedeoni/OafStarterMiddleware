@@ -39,11 +39,11 @@ namespace Application.Worlds.Commands
             var world = new World { Name = request.createWorldDto.Name, HasLife = request.createWorldDto.HasLife };
             var createdWorld = await _worldRepository.UpsertDocument(world.Id, world).ConfigureAwait(false);
 
-            _logger.LogInformation($"World created: {JsonSerializer.Serialize(createdWorld)}");
+            _logger.LogInformation($"{new {Entity=createdWorld.Entity, Id=createdWorld.Id, Action="world created", Message="Inserted world in the database"}}");
 
-            var payload = new {Id = createdWorld.Id, Ref = $"/api/world/{createdWorld.Id}"};
+            EventBusPayload payload = new EventBusPayload{Id = createdWorld.Id, Ref = $"/api/world/{createdWorld.Id}"};
             await _publishEvent.PublishEvent(payload, "Hello.World.Created").ConfigureAwait(false);
-
+            _logger.LogInformation($"{new {Entity=payload.GetType(), Id=payload.Id, Action="published world"}}");
             return createdWorld;
         }
     }

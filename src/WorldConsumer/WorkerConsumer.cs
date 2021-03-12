@@ -42,8 +42,7 @@ namespace WorldConsumer
                 var payload = JsonConvert.DeserializeObject<EventBusPayload>(message);
                 var worldCreatedNotification = new WorldCreatedNotification(payload, action);
 
-                _logger.LogInformation($"Initiated command {JsonConvert.SerializeObject(worldCreatedNotification)}");
-
+                _logger.LogInformation($"{new {Action="Initiated Event Bus notification", Message="worldCreatedNotification notification created"}}");
                 await _mediator.Publish(worldCreatedNotification).ConfigureAwait(false);
             }
             catch (System.Exception ex)
