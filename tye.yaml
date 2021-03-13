@@ -15,11 +15,11 @@ services:
         name: query
       - port: 8094
         name: search
-  - name: api
+  - name: notificationapi
     project: src/Api/Api.csproj
     bindings:
       - port: 5000
-  - name: worldConsumer
+  - name: worldconsumer
     project: src/WorldConsumer/WorldConsumer.csproj
     bindings:
       - port: 3000

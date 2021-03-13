@@ -43,7 +43,7 @@ namespace Application.Worlds.Commands
 
             EventBusPayload payload = new EventBusPayload{Id = createdWorld.Id, Ref = $"/api/world/{createdWorld.Id}"};
             await _publishEvent.PublishEvent(payload, "Hello.World.Created").ConfigureAwait(false);
-            _logger.LogInformation($"{new {Entity=payload.GetType(), Id=payload.Id, Action="published world"}}");
+            _logger.LogInformation($"{new {Entity=payload.GetType(), Id=payload.Id, Action="world published", Message="World published to the RabbitMq"}}");
             return createdWorld;
         }
     }

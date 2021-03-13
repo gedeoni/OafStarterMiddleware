@@ -36,14 +36,13 @@ namespace WorldConsumer
             try
             {
                 string action = routingKey.Split('.')[2];
-                _logger.LogInformation($"Routing key used: {routingKey}");
-                _logger.LogInformation($"Message received: {message}");
-
                 var payload = JsonConvert.DeserializeObject<EventBusPayload>(message);
+
+                _logger.LogInformation($"{new {Entity=payload.GetType(),Id=payload.Id,Action="Receive message",Message="RabbitMQ message received"}}");
                 var worldCreatedNotification = new WorldCreatedNotification(payload, action);
 
-                _logger.LogInformation($"{new {Action="Initiated Event Bus notification", Message="worldCreatedNotification notification created"}}");
                 await _mediator.Publish(worldCreatedNotification).ConfigureAwait(false);
+                _logger.LogInformation($"{new {Entity=worldCreatedNotification.GetType(),Action="Publish EventBusnotification", Message="worldCreatedNotification published"}}");
             }
             catch (System.Exception ex)
             {
