@@ -24,7 +24,10 @@ steps:
       packageType: 'sdk'
       version: '5.0.x'
 
-  - script: echo `dotnet --info`
+  - script: echo `dotnet restore`
+    displayName: restore
+  - script: echo `dotnet test`
+    displayName: test
   - script: |
       VERSION_TAG=`git describe --abbrev=0 --tags 2&>/dev/null || echo 0.0.1`
       echo "##vso[task.setvariable variable=VERSION_TAG]$VERSION_TAG"
