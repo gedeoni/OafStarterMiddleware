@@ -15,10 +15,9 @@ namespace Integration
     {
         private readonly HttpClient testClient;
         private readonly ITestOutputHelper _testOutputHelper;
-        public Integration(ServerFixture serverFixture,ITestOutputHelper testOutputHelper)
+        public Integration(ServerFixture serverFixture)
         {
             testClient = serverFixture.client;
-            _testOutputHelper = testOutputHelper;
         }
 
         [Fact]
