@@ -8,7 +8,6 @@ using Application.Common.Events;
 using MediatR;
 using Newtonsoft.Json;
 using sdk.MessageHandler;
-using Serilog;
 namespace WorldConsumer
 {
     public class WorldConsumer : IHostedService, IMessageHandlerCallback

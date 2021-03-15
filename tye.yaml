@@ -2,7 +2,7 @@ name: starter
 
 services:
   - name: couchbase
-    image: jeremiahchienda/oaf-couchbase-starter:latest
+    image: gniyonku/couchbase-world:latest
     bindings:
       - port: 11210
         name: data
@@ -15,6 +15,14 @@ services:
         name: query
       - port: 8094
         name: search
+  - name: rabbit
+    image: jeremiahchienda/oaf-rabbit-starter
+    bindings:
+    - port: 5672
+      name: application
+      connectionString: amqp://guest:guest@${host}:${port}/
+    - port: 15672
+      name: admin
   - name: notificationapi
     project: src/Api/Api.csproj
     bindings:
