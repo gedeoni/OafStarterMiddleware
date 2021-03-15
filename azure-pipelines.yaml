@@ -26,6 +26,8 @@ steps:
 
   - script: echo `dotnet restore`
     displayName: restore
+  - script: echo `ls`
+    displayName: checking dir
   - script: echo `dotnet test`
     displayName: test
   - script: |
