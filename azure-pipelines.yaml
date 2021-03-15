@@ -24,6 +24,10 @@ steps:
       packageType: 'sdk'
       version: '5.0.x'
 
+  - script: |
+      INFO=`dotnet --info`
+      echo "##vso $INFO"
+    displayName: Getting dotnet info
   - task: DotNetCoreCLI@2
     inputs:
       command: restore
