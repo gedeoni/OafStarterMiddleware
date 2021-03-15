@@ -38,48 +38,48 @@ steps:
       containerRegistry: azurecr-oaf
       command: "login"
 
-  - task: SonarCloudPrepare@1
-    enabled: false
-    continueOnError: true
-    inputs:
-      SonarCloud: "sonar-oaf"
-      organization: "one-acre-fund"
-      scannerMode: "CLI"
-      configMode: "manual"
-      cliProjectKey: "one-acre-fund_mw-oaf-starter"
-      cliProjectName: "mw-oaf-starter"
-      cliSources: "."
+  # - task: SonarCloudPrepare@1
+  #   enabled: false
+  #   continueOnError: true
+  #   inputs:
+  #     SonarCloud: "sonar-oaf"
+  #     organization: "one-acre-fund"
+  #     scannerMode: "CLI"
+  #     configMode: "manual"
+  #     cliProjectKey: "one-acre-fund_mw-oaf-starter"
+  #     cliProjectName: "mw-oaf-starter"
+  #     cliSources: "."
 
   # See https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/build/dotnet-core-cli?view=azure-devops
   # TODO:
   # Capture and publish coverage
-  - task: DotNetCoreCLI@2
-    displayName: Run and publish tests
-    inputs:
-      command: test
-      projects: 'tests/**/*.csproj'
-      arguments: '--configuration Release'
-      publishTestResults: true
+  # - task: DotNetCoreCLI@2
+  #   displayName: Run and publish tests
+  #   inputs:
+  #     command: test
+  #     projects: 'tests/**/*.csproj'
+  #     arguments: '--configuration Release'
+  #     publishTestResults: true
 
-  - task: PublishCodeCoverageResults@1
-    condition: succeededOrFailed()
-    continueOnError: true
-    inputs:
-      codeCoverageTool: Cobertura
-      summaryFileLocation: "$(System.DefaultWorkingDirectory)/**/*coverage.xml"
-      reportDirectory: "$(System.DefaultWorkingDirectory)/**/coverage"
+  # - task: PublishCodeCoverageResults@1
+  #   condition: succeededOrFailed()
+  #   continueOnError: true
+  #   inputs:
+  #     codeCoverageTool: Cobertura
+  #     summaryFileLocation: "$(System.DefaultWorkingDirectory)/**/*coverage.xml"
+  #     reportDirectory: "$(System.DefaultWorkingDirectory)/**/coverage"
 
-  - task: SonarCloudAnalyze@1
-    enabled: false
-    condition: succeededOrFailed()
-    continueOnError: true
+  # - task: SonarCloudAnalyze@1
+  #   enabled: false
+  #   condition: succeededOrFailed()
+  #   continueOnError: true
 
-  - task: SonarCloudPublish@1
-    enabled: false
-    condition: succeededOrFailed()
-    continueOnError: true
-    inputs:
-      pollingTimeoutSec: "300"
+  # - task: SonarCloudPublish@1
+  #   enabled: false
+  #   condition: succeededOrFailed()
+  #   continueOnError: true
+  #   inputs:
+  #     pollingTimeoutSec: "300"
 
   # This is where the magic happens
   # TODO:
