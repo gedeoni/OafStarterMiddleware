@@ -56,7 +56,9 @@ steps:
   - task: DotNetCoreCLI@2
     displayName: Run and publish tests
     inputs:
-      command: test tests/Integration/Integration.csproj
+      command: test
+      projects: 'tests/**/*.csproj'
+      arguments: '--configuration Release'
       publishTestResults: true
 
   - task: PublishCodeCoverageResults@1
