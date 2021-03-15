@@ -23,3 +23,7 @@ services:
         name: query
       - port: 8094
         name: search
+  - name: worldconsumer
+    project: src/WorldConsumer/WorldConsumer.csproj
+    bindings:
+      - port: 3000
