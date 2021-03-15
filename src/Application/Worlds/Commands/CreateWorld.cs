@@ -36,6 +36,7 @@ namespace Application.Worlds.Commands
 
         async public Task<World> Handle(CreateWorldComand request, CancellationToken cancellationToken)
         {
+            //we can't test id's because they are not created by a user!!
             var world = new World { Name = request.createWorldDto.Name, HasLife = request.createWorldDto.HasLife };
             var createdWorld = await _worldRepository.UpsertDocument(world.Id, world).ConfigureAwait(false);
 
