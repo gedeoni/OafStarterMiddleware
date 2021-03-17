@@ -14,26 +14,23 @@ namespace Api.Controllers
     [Route("api/[controller]")]
     public class WorldController : ControllerBase
     {
-        private readonly ILogger<WorldController> _logger;
         private readonly IMediator _mediator;
 
         public WorldController(ILogger<WorldController> logger, IMediator mediator)
         {
-            _logger = logger;
             _mediator = mediator;
         }
 
         [HttpGet]
-        async public Task<List<World>> Index()
+        async public Task<ActionResult<IEnumerable<World>>> GetWorlds()
         {
-            return await _mediator.Send(new GetAllWorlds()).ConfigureAwait(false);
+            return await _mediator.Send(new GetAllWorlds());
         }
 
         [HttpPost]
-        public async Task<World> Create(CreateWorldDto createWorldDto)
+        public async Task<ActionResult<World>> PostWorld(CreateWorldDto createWorldDto)
         {
-            _logger.LogInformation($"{new {Entity=createWorldDto, Message="Received Post world request"}}");
-            return await _mediator.Send(new CreateWorldComand(createWorldDto)).ConfigureAwait(false);
+            return await _mediator.Send(new CreateWorldComand(createWorldDto));
         }
     }
 }
