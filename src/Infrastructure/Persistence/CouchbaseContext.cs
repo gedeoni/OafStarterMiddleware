@@ -5,6 +5,12 @@ using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Persistence
 {
+    public interface ICouchbaseContext
+    {
+        IBucket Bucket { get; }
+        ICouchbaseCollection Collection { get; }
+    }
+
     public class CouchbaseContext : ICouchbaseContext
     {
         public IBucket Bucket { get; }

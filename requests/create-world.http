@@ -1,8 +1,9 @@
 @baseUrl = http://localhost:5000
 
-POST {{baseUrl}}/api/world HTTP/1.1
+POST {{baseUrl}}/api/worlds HTTP/1.1
 content-type: application/json
 
 {
-    "names": "Mercury"
-}
+    "name": "Neptune",
+    "hasLife": true
+} 

@@ -23,7 +23,7 @@ services:
       connectionString: amqp://guest:guest@${host}:${port}/
     - port: 15672
       name: admin
-  - name: notificationapi
+  - name: api
     project: src/Api/Api.csproj
     bindings:
       - port: 5000

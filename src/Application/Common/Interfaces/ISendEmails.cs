@@ -3,7 +3,7 @@ using Application.Common.DTOs;
 
 namespace Application.Common.Interfaces
 {
-    public interface IHttpWorldClient
+    public interface ISendEmails
     {
         public Task SendEmail(EmailDto emailDto);
     }

@@ -1,11 +1,11 @@
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Application.Common.DTOs;
 using Application.Common.Events;
 using MediatR;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using sdk.MessageHandler;
 namespace WorldConsumer
@@ -34,14 +34,10 @@ namespace WorldConsumer
         {
             try
             {
-                string action = routingKey.Split('.')[2];
                 var payload = JsonConvert.DeserializeObject<EventBusPayload>(message);
-
-                _logger.LogInformation($"{new {Entity=payload.GetType(),Id=payload.Id,Action="Receive message",Message="RabbitMQ message received"}}");
-                var worldCreatedNotification = new WorldCreatedNotification(payload, action);
-
-                await _mediator.Publish(worldCreatedNotification).ConfigureAwait(false);
-                _logger.LogInformation($"{new {Entity=worldCreatedNotification.GetType(),Action="Publish EventBusnotification", Message="worldCreatedNotification published"}}");
+                await _mediator
+                    .Publish(new WorldReceived(payload, routingKey.Split('.')[2]))
+                    .ConfigureAwait(false);
             }
             catch (System.Exception ex)
             {

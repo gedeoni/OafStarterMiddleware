@@ -26,7 +26,7 @@ namespace Infrastructure
             services.AddCouchbaseBucket<IRepaymentsBucket>(options.BucketName);
             services.AddSingleton<ICouchbaseContext, CouchbaseContext>();
             services.AddSingleton<IWorldRepository, WorldRepository>();
-            services.AddSingleton<IHttpWorldClient, HttpWorldClient>();
+            services.AddSingleton<ISendEmails, SMTPEmailClient>();
             services.AddOafRabbit(options =>
             {
                 var rabbitMqOptions = Configuration.GetSection("RabbitMQ").Get<RabbitMqOptions>();

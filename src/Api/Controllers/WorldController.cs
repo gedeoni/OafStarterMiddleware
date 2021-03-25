@@ -12,11 +12,11 @@ namespace Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class WorldController : ControllerBase
+    public class WorldsController : ControllerBase
     {
         private readonly IMediator _mediator;
 
-        public WorldController(ILogger<WorldController> logger, IMediator mediator)
+        public WorldsController(IMediator mediator)
         {
             _mediator = mediator;
         }
@@ -30,7 +30,8 @@ namespace Api.Controllers
         [HttpPost]
         public async Task<ActionResult<World>> PostWorld(CreateWorldDto createWorldDto)
         {
-            return await _mediator.Send(new CreateWorldComand(createWorldDto));
+            var world = await _mediator.Send(new CreateWorldComand(createWorldDto));
+            return new CreatedResult("api/worlds", world);
         }
     }
 }

@@ -42,19 +42,19 @@ namespace Application.Worlds.Commands
                 HasLife = request.createWorldDto.HasLife
             };
 
-            var createdWorld = await _worldRepository.UpsertDocument(world.Id, world);
+            var createdWorld = await _worldRepository.InsertDocument(world);
 
             _logger.LogInformation("Saved @World to database", world);
-            EventBusPayload payload = Payload(createdWorld);
+            EventBusPayload payload = GetPayload(createdWorld.Id);
 
             await _publishEvent.PublishEvent(payload, RoutingKey);
 
             return createdWorld;
         }
 
-        private static EventBusPayload Payload(World createdWorld) => new EventBusPayload {
-            Id = createdWorld.Id,
-            Ref = $"/api/world/{createdWorld.Id}"
+        private static EventBusPayload GetPayload(string id) => new EventBusPayload {
+            Id = id,
+            Ref = $"/api/world/{id}"
         };
     }
 }
