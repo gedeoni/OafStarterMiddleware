@@ -44,7 +44,6 @@ namespace Application.Worlds.Commands
 
             var createdWorld = await _worldRepository.InsertDocument(world);
 
-            _logger.LogInformation("Saved @World to database", world);
             EventBusPayload payload = GetPayload(createdWorld.Id);
 
             await _publishEvent.PublishEvent(payload, RoutingKey);

@@ -5,12 +5,13 @@ using Application.Common.Interfaces;
 using Couchbase;
 using Couchbase.Query;
 using Domain.Entities;
+using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Persistence
 {
     public class WorldRepository : CouchbaseRepository<World>, IWorldRepository
     {
-        public WorldRepository(ICouchbaseContext couchbaseContext) : base(couchbaseContext)
+        public WorldRepository(ICouchbaseContext couchbaseContext, ILogger<CouchbaseRepository<World>> logger) : base(couchbaseContext, logger)
         {
         }
     }
