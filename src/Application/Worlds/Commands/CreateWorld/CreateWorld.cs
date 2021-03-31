@@ -37,10 +37,7 @@ namespace Application.Worlds.Commands
 
         async public Task<World> Handle(CreateWorldComand request, CancellationToken cancellationToken)
         {
-            var world = new World {
-                Name = request.createWorldDto.Name,
-                HasLife = request.createWorldDto.HasLife
-            };
+            World world = MapWorldFromDto(request);
 
             var createdWorld = await _worldRepository.InsertDocument(world);
 
@@ -49,6 +46,14 @@ namespace Application.Worlds.Commands
             await _publishEvent.PublishEvent(payload, RoutingKey);
 
             return createdWorld;
+        }
+
+        private static World MapWorldFromDto(CreateWorldComand request)
+        {
+            return new World {
+                Name = request.createWorldDto.Name,
+                HasLife = request.createWorldDto.HasLife
+            };
         }
 
         private static EventBusPayload GetPayload(string id) => new EventBusPayload {

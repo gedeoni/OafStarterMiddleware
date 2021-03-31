@@ -8,6 +8,7 @@ using Couchbase;
 using Couchbase.KeyValue;
 using Couchbase.Query;
 using Domain.Common.Interfaces;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -21,13 +22,15 @@ namespace Infrastructure.Persistence
 
         protected readonly ILogger<CouchbaseRepository<TEntity>> _logger;
 
+        protected readonly IConfiguration _config;
 
 
-        protected CouchbaseRepository(ICouchbaseContext couchbaseContext, ILogger<CouchbaseRepository<TEntity>> logger)
+        protected CouchbaseRepository(ICouchbaseContext couchbaseContext, ILogger<CouchbaseRepository<TEntity>> logger, IConfiguration config)
         {
             _couchbaseContext = couchbaseContext;
             _entity = typeof(TEntity).Name;
             _logger = logger;
+            _config = config;
         }
 
         async public Task<TEntity> FindOneDocument(string id)
@@ -41,7 +44,7 @@ namespace Infrastructure.Persistence
                 "CouchbaseOperation: Executed FindOne operation on {Entity} with {Id} in {Elapsed:000}ms",
                 _entity,
                 id,
-                DateTime.Now.Subtract(start).Seconds);
+                DateTime.Now.Subtract(start).Milliseconds);
 
             return result.ContentAs<TEntity>();
         }
@@ -58,11 +61,11 @@ namespace Infrastructure.Persistence
         {
             var start = DateTime.Now;
 
-            //TODO: World should come from the Bucket Condiguration
-            string query = "SELECT * from World where entity = $entityName LIMIT $limit OFFSET $offset";
+            string query = "SELECT * from $bucket where entity = $entityName LIMIT $limit OFFSET $offset";
             var cbResults = await _couchbaseContext.Bucket.Cluster
                 .QueryAsync<dynamic>(query,
                                      options => options
+                                        .Parameter("bucket", _config.GetSection("Couchbase:BucketName"))
                                         .Parameter("entityName", _entity)
                                         .Parameter("limit", limit)
                                         .Parameter("offset", offset));
@@ -70,7 +73,7 @@ namespace Infrastructure.Persistence
             _logger.LogInformation(
                 "CouchbaseOperation: Executed FindAll operation on {Entity} in {Elapsed:000}ms",
                 _entity,
-                DateTime.Now.Subtract(start).Seconds);
+                DateTime.Now.Subtract(start).Milliseconds);
 
             var results = new List<TEntity> { };
 
@@ -88,15 +91,17 @@ namespace Infrastructure.Persistence
             var start = DateTime.Now;
 
             var cluster = _couchbaseContext.Bucket.Cluster;
-            string query = "SELECT RAW count(*) from World where entity = $entityName";
+            string query = "SELECT RAW count(*) from $bucket where entity = $entityName";
             var results = await cluster.QueryAsync<int>(query, options => {
-                options.Parameter("entityName", _entity);
+                options
+                .Parameter("bucket", _config.GetSection("Couchbase:BucketName"))
+                .Parameter("entityName", _entity);
             });
 
             _logger.LogInformation(
                 "CouchbaseOperation: Executed Count operation on {Entity} in {Elapsed:000}ms",
                 _entity,
-                DateTime.Now.Subtract(start).Seconds);
+                DateTime.Now.Subtract(start).Milliseconds);
 
             return results.Rows;
         }
@@ -117,7 +122,7 @@ namespace Infrastructure.Persistence
                 "CouchbaseOperation: Executed Insert operation on {Entity} with {Id} in {Elapsed:000}ms",
                 entity,
                 entity.Id,
-                DateTime.Now.Subtract(start).Seconds);
+                DateTime.Now.Subtract(start).Milliseconds);
 
             return await FindOneDocument(id);
         }
@@ -135,7 +140,7 @@ namespace Infrastructure.Persistence
                 _entity,
                 documentId,
                 subDocumentId,
-                DateTime.Now.Subtract(start).Seconds);
+                DateTime.Now.Subtract(start).Milliseconds);
 
             return await UpsertDocument(documentId, await FindOneDocument(documentId));
         }
@@ -153,7 +158,7 @@ namespace Infrastructure.Persistence
                 _entity,
                 documentId,
                 subDocumentId,
-                DateTime.Now.Subtract(start).Seconds);
+                DateTime.Now.Subtract(start).Milliseconds);
 
             return await UpsertDocument(documentId, await FindOneDocument(documentId));
         }
@@ -171,7 +176,7 @@ namespace Infrastructure.Persistence
                 "CouchbaseOperation: Executed Upsert operation on {Entity} with {Id} in {Elapsed:000}ms",
                 _entity,
                 id,
-                DateTime.Now.Subtract(start).Seconds);
+                DateTime.Now.Subtract(start).Milliseconds);
 
             return await FindOneDocument(id);
         }
@@ -189,7 +194,7 @@ namespace Infrastructure.Persistence
                 "CouchbaseOperation: Executed Remove operation on {Entity} with {Id} in {Seconds}",
                 _entity,
                 id,
-                DateTime.Now.Subtract(start).Seconds);
+                DateTime.Now.Subtract(start).Milliseconds);
 
             return id;
         }
