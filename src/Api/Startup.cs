@@ -1,4 +1,6 @@
+using Api.Filters;
 using Application;
+using FluentValidation.AspNetCore;
 using Infrastructure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -23,7 +25,10 @@ namespace Api
         {
             services.AddApplication();
             services.AddInfrastructure(Configuration);
-            services.AddControllers();
+            services.AddControllers(options =>
+                options.Filters.Add<ApiExceptionFilterAttribute>())
+                    .AddFluentValidation();
+
             services.AddSwaggerGen(c => {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Api", Version = "v1" });
             });
@@ -35,9 +40,10 @@ namespace Api
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Api v1"));
             }
+
+            app.UseSwagger();
+            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Api v1"));
 
             app.UseHttpsRedirection();
 

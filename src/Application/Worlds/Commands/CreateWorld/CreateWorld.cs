@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Application.Common.DTOs;
 using Application.Common.Interfaces;
-using Application.Worlds.DTOs;
+using Application.Worlds.Commands;
 using Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;

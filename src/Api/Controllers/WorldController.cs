@@ -1,12 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Application.Worlds.Commands;
-using Application.Worlds.DTOs;
 using Application.Worlds.Queries;
 using Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
 namespace Api.Controllers
 {
@@ -24,7 +22,15 @@ namespace Api.Controllers
         [HttpGet]
         async public Task<ActionResult<IEnumerable<World>>> GetWorlds()
         {
-            return await _mediator.Send(new GetAllWorlds());
+            var worlds = await _mediator.Send(new GetAllWorldsQuery());
+            return Ok(worlds);
+        }
+
+        [HttpGet("{id}")]
+        async public Task<ActionResult<World>> GetWorld(string id)
+        {
+            var world = await _mediator.Send(new GetWorldByIdQuery() { Id = id });
+            return Ok(world);
         }
 
         [HttpPost]

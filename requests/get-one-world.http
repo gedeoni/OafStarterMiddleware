@@ -1,0 +1,4 @@
+@baseUrl = http://localhost:5000
+@id = c5a6b391-f6ae-4484-99d7-98b26e799dde
+
+GET {{baseUrl}}/api/worlds/{{id}} HTTP/1.1

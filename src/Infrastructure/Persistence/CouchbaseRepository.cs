@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading.Tasks;
 using Application.Common.Interfaces;
 using Couchbase;
@@ -8,6 +9,8 @@ using Couchbase.KeyValue;
 using Couchbase.Query;
 using Domain.Common.Interfaces;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Infrastructure.Persistence
 {
@@ -39,6 +42,7 @@ namespace Infrastructure.Persistence
                 _entity,
                 id,
                 DateTime.Now.Subtract(start).Seconds);
+
             return result.ContentAs<TEntity>();
         }
 
@@ -48,13 +52,15 @@ namespace Infrastructure.Persistence
         //TODO: Replace Document
         //TODO: Remove SubDocument
         //TODO: Replace SubDocument
+        //TODO: Dynamic Where Clause
 
         public async Task<IEnumerable<TEntity>> FindAllDocuments(int limit = 20, int offset = 0)
         {
             var start = DateTime.Now;
 
+            //TODO: World should come from the Bucket Condiguration
             string query = "SELECT * from World where entity = $entityName LIMIT $limit OFFSET $offset";
-            var results = await _couchbaseContext.Bucket.Cluster
+            var cbResults = await _couchbaseContext.Bucket.Cluster
                 .QueryAsync<dynamic>(query,
                                      options => options
                                         .Parameter("entityName", _entity)
@@ -66,7 +72,15 @@ namespace Infrastructure.Persistence
                 _entity,
                 DateTime.Now.Subtract(start).Seconds);
 
-            return (IEnumerable<TEntity>)results.Rows;
+            var results = new List<TEntity> { };
+
+            await foreach (var result in cbResults)
+            {
+                results.Add(result[_entity].ToObject<TEntity>());
+            }
+
+            return results;
+
         }
 
         public async Task<IAsyncEnumerable<int>> Count()
@@ -93,7 +107,9 @@ namespace Infrastructure.Persistence
 
             var id = entity.Id == null ? Guid.NewGuid().ToString() : entity.Id;
             entity.Entity = _entity;
+            entity.Id = id;
             entity.CreatedAt = DateTime.Now;
+            entity.UpdatedAt = DateTime.Now;
 
             await _couchbaseContext.Collection.InsertAsync($"{_entity}-{id}", entity);
 

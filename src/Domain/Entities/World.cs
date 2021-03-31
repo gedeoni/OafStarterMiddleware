@@ -7,7 +7,7 @@ namespace Domain.Entities
     {
         public string Name { get; set; }
         public bool HasLife { get; set; }
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string Id { get; set; }
         public string Entity { get; set; }
     }
 }

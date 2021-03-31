@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Application.Worlds.DTOs
+namespace Application.Worlds.Commands
 {
     public class CreateWorldDto
     {
@@ -8,7 +8,6 @@ namespace Application.Worlds.DTOs
         public string Name { get; set; }
 
         [Required()]
-        [Range(typeof(bool), "true", "true")]
         public bool HasLife { get; set; }
     }
 }
