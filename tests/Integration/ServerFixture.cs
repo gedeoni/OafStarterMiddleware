@@ -1,10 +1,10 @@
 using System.IO;
-using Xunit;
-using Api;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using System.Net.Http;
+using Api;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
+using Xunit;
 using Xunit.Abstractions;
 
 namespace Integration
@@ -16,11 +16,10 @@ namespace Integration
         public ServerFixture()
         {
             TestServer testServer = new TestServer(new WebHostBuilder()
-                .ConfigureAppConfiguration((context, builder) =>
-                {
-                    string rootDir =$"{ Directory.GetParent(Directory.GetParent( Directory.GetParent(Directory.GetParent(Directory.GetCurrentDirectory()).FullName).FullName).FullName).FullName}/testconfig";
+                .ConfigureAppConfiguration((context, builder) => {
+                    string rootDir = $"{Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.Parent}/src/config";
                     builder.SetBasePath(rootDir);
-                    builder.AddJsonFile("appsettings.Test.json");
+                    builder.AddJsonFile("appsettings.Testing.json");
                 })
                 .UseStartup<Startup>());
 
@@ -29,7 +28,7 @@ namespace Integration
     }
 
     [CollectionDefinition("Server collection")]
-    public class ServerCollection: ICollectionFixture<ServerFixture>
+    public class ServerCollection : ICollectionFixture<ServerFixture>
     {
     }
 }

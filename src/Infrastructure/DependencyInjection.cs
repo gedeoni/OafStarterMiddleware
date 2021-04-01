@@ -1,12 +1,12 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Configuration;
-using Couchbase.Extensions.DependencyInjection;
 using Application.Common.Interfaces;
+using Couchbase.Extensions.DependencyInjection;
+using Infrastructure.Email;
 using Infrastructure.Persistence;
-using Infrastructure.Http;
-using sdk.Options;
-using sdk;
 using Infrastructure.RabbitMqEventBus;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using sdk;
+using sdk.Options;
 
 namespace Infrastructure
 {
@@ -16,8 +16,7 @@ namespace Infrastructure
         {
             var options = Configuration.GetSection("Couchbase").Get<CouchbaseConfig>();
 
-            services.AddCouchbase(repayments =>
-            {
+            services.AddCouchbase(repayments => {
                 repayments.EnableTls = false;
                 repayments.ConnectionString = Configuration.GetConnectionString("couchbase:data");
                 repayments.WithCredentials(options.Username, options.Password);
@@ -26,9 +25,8 @@ namespace Infrastructure
             services.AddCouchbaseBucket<IRepaymentsBucket>(options.BucketName);
             services.AddSingleton<ICouchbaseContext, CouchbaseContext>();
             services.AddSingleton<IWorldRepository, WorldRepository>();
-            services.AddSingleton<ISendEmails, SMTPEmailClient>();
-            services.AddOafRabbit(options =>
-            {
+            services.AddSingleton<ISendEmails, FakeEmailClient>();
+            services.AddOafRabbit(options => {
                 var rabbitMqOptions = Configuration.GetSection("RabbitMQ").Get<RabbitMqOptions>();
 
                 options.HostName = rabbitMqOptions.HostName;
