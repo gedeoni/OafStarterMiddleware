@@ -14,18 +14,19 @@ namespace Infrastructure
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration Configuration)
         {
-            var options = Configuration.GetSection("Couchbase").Get<CouchbaseConfig>();
+            var couchbaseOptions = Configuration.GetSection("Couchbase").Get<CouchbaseConfig>();
 
-            services.AddCouchbase(repayments => {
-                repayments.EnableTls = false;
-                repayments.ConnectionString = Configuration.GetConnectionString("couchbase:data");
-                repayments.WithCredentials(options.Username, options.Password);
+            services.AddCouchbase(options => {
+                options.EnableTls = false;
+                options.ConnectionString = Configuration.GetConnectionString("couchbase:data");
+                options.WithCredentials(couchbaseOptions.Username, couchbaseOptions.Password);
             });
 
-            services.AddCouchbaseBucket<IRepaymentsBucket>(options.BucketName);
+            services.AddCouchbaseBucket<IWorldsBucket>(couchbaseOptions.BucketName);
             services.AddSingleton<ICouchbaseContext, CouchbaseContext>();
             services.AddSingleton<IWorldRepository, WorldRepository>();
             services.AddSingleton<ISendEmails, FakeEmailClient>();
+            services.AddSingleton<IPublishEvent, RabbitMQEventBus>();
             services.AddOafRabbit(options => {
                 var rabbitMqOptions = Configuration.GetSection("RabbitMQ").Get<RabbitMqOptions>();
 
@@ -38,18 +39,7 @@ namespace Infrastructure
                 options.ConnectRetries = rabbitMqOptions.ConnectRetries;
                 options.ConnectRetriesTimeSpan = rabbitMqOptions.ConnectRetriesTimeSpan;
             });
-            services.AddSingleton<IPublishEvent, RabbitMQEventBus>();
             return services;
         }
-    }
-
-    public interface IRepaymentsBucket : INamedBucketProvider { }
-    public class CouchbaseConfig
-    {
-        public string Username { get; set; }
-        public string Password { get; set; }
-        public string[] Servers { get; set; }
-        public bool UseSsl { get; set; }
-        public string BucketName { get; set; }
     }
 }

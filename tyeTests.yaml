@@ -10,7 +10,7 @@ services:
     - port: 15672
       name: admin
   - name: couchbase
-    image: gniyonku/couchbase-world:latest
+    image: jeremiahchienda/couchbase-starter:latest
     bindings:
       - port: 11210
         name: data

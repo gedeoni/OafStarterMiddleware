@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
 using System.Threading.Tasks;
 using Application.Common.Interfaces;
 using Couchbase;
@@ -10,8 +8,6 @@ using Couchbase.Query;
 using Domain.Common.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Infrastructure.Persistence
 {
@@ -19,10 +15,10 @@ namespace Infrastructure.Persistence
     {
         protected readonly ICouchbaseContext _couchbaseContext;
         protected readonly string _entity;
+        protected readonly string _bucketName;
 
         protected readonly ILogger<CouchbaseRepository<TEntity>> _logger;
 
-        protected readonly IConfiguration _config;
 
 
         protected CouchbaseRepository(ICouchbaseContext couchbaseContext, ILogger<CouchbaseRepository<TEntity>> logger, IConfiguration config)
@@ -30,7 +26,7 @@ namespace Infrastructure.Persistence
             _couchbaseContext = couchbaseContext;
             _entity = typeof(TEntity).Name;
             _logger = logger;
-            _config = config;
+            _bucketName = config.GetSection("Couchbase:BucketName").Value;
         }
 
         async public Task<TEntity> FindOneDocument(string id)
@@ -61,11 +57,11 @@ namespace Infrastructure.Persistence
         {
             var start = DateTime.Now;
 
-            string query = "SELECT * from $bucket where entity = $entityName LIMIT $limit OFFSET $offset";
+            string query = $"SELECT * from `{_bucketName}` where entity = $entityName LIMIT $limit OFFSET $offset";
+
             var cbResults = await _couchbaseContext.Bucket.Cluster
                 .QueryAsync<dynamic>(query,
                                      options => options
-                                        .Parameter("bucket", _config.GetSection("Couchbase:BucketName"))
                                         .Parameter("entityName", _entity)
                                         .Parameter("limit", limit)
                                         .Parameter("offset", offset));
@@ -79,7 +75,8 @@ namespace Infrastructure.Persistence
 
             await foreach (var result in cbResults)
             {
-                results.Add(result[_entity].ToObject<TEntity>());
+                var parsedResult = result[_bucketName].ToObject<TEntity>();
+                results.Add(parsedResult);
             }
 
             return results;
@@ -91,10 +88,9 @@ namespace Infrastructure.Persistence
             var start = DateTime.Now;
 
             var cluster = _couchbaseContext.Bucket.Cluster;
-            string query = "SELECT RAW count(*) from $bucket where entity = $entityName";
+            string query = $"SELECT RAW count(*) from `{_bucketName}` where entity = $entityName";
             var results = await cluster.QueryAsync<int>(query, options => {
                 options
-                .Parameter("bucket", _config.GetSection("Couchbase:BucketName"))
                 .Parameter("entityName", _entity);
             });
 
