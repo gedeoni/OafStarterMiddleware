@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Application.Common.Interfaces;
 using Couchbase;
@@ -83,13 +84,13 @@ namespace Infrastructure.Persistence
 
         }
 
-        public async Task<IAsyncEnumerable<int>> Count()
+        public async Task<int> Count()
         {
             var start = DateTime.Now;
 
             var cluster = _couchbaseContext.Bucket.Cluster;
             string query = $"SELECT RAW count(*) from `{_bucketName}` where entity = $entityName";
-            var results = await cluster.QueryAsync<int>(query, options => {
+            var couchbaseResults = await cluster.QueryAsync<int>(query, options => {
                 options
                 .Parameter("entityName", _entity);
             });
@@ -99,7 +100,8 @@ namespace Infrastructure.Persistence
                 _entity,
                 DateTime.Now.Subtract(start).Milliseconds);
 
-            return results.Rows;
+            var results = await couchbaseResults.Rows.ToListAsync().AsTask();
+            return results[0];
         }
 
         public async Task<TEntity> InsertDocument(TEntity entity)

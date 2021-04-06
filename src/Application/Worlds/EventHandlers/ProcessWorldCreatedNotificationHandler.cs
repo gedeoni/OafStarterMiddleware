@@ -30,18 +30,14 @@ namespace Application.Worlds.EventHandlers
         {
             var totalWorlds = await _worldRepository.Count();
 
-            await foreach (var number in totalWorlds)
-            {
-                _logger.LogInformation($" {new { Action = "Total worlds fetched", Message = $"the total worlds number is {number}" }}");
-                EmailDto emailDto = new EmailDto {
-                    SenderEmail = "kaninijoe@gmail.com",
-                    RecipientEmail = "jeremiahchienda@gmail.com",
-                    Subject = "Testing Email",
-                    Body = $"the total number of worlds is {number}"
-                };
-                await _httpWorldClient.SendEmail(emailDto);
-                _logger.LogInformation($" {new { Action = "Worlds number email sent", Message = $"the total worlds number email sent to {emailDto.SenderEmail}" }}");
-            }
+            EmailDto emailDto = new EmailDto {
+                SenderEmail = "kaninijoe@gmail.com",
+                RecipientEmail = "jeremiahchienda@gmail.com",
+                Subject = "Testing Email",
+                Body = $"the total number of worlds is {totalWorlds}"
+            };
+
+            await _httpWorldClient.SendEmail(emailDto);
         }
     }
 }
