@@ -5,8 +5,8 @@ using Infrastructure.Persistence;
 using Infrastructure.RabbitMqEventBus;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using sdk;
-using sdk.Options;
+using Oaf.Rabbit.Sdk;
+using Oaf.Rabbit.Sdk.Options;
 
 namespace Infrastructure
 {
@@ -36,8 +36,8 @@ namespace Infrastructure
                 options.Password = rabbitMqOptions.Password;
                 options.RoutingKeys = rabbitMqOptions.RoutingKeys;
                 options.Port = rabbitMqOptions.Port;
-                options.ConnectRetries = rabbitMqOptions.ConnectRetries;
-                options.ConnectRetriesTimeSpan = rabbitMqOptions.ConnectRetriesTimeSpan;
+                options.ConnectionRetries = rabbitMqOptions.ConnectionRetries;
+                options.ConnectionRetriesTimeSpan = rabbitMqOptions.ConnectionRetriesTimeSpan;
             });
             return services;
         }
