@@ -87,7 +87,6 @@ namespace IntegrationTests
                 var results = await _couchbaseContext.Collection.InsertAsync($"{fakeWorld.Entity}-{id}", fakeWorld);
 
                 //Act
-                // The signature for the remove document method is a bit confusing. The passed in entity is not needed for the operation
                 var expected = await _worldRepo.RemoveDocument(id,fakeWorld);
 
                 //Assert
@@ -108,37 +107,6 @@ namespace IntegrationTests
 
                 //Assert
                 expected.Name.Should().Be("Jupiter");
-            }
-
-            [Fact]
-            async void TestThatUpsertSubDocumentWorks()
-            {
-                //Arrange - Use the Context to Create data in the Datbase
-                var id = Guid.NewGuid().ToString();
-                var fakeWorld = new World() { Name = "Mars", HasLife = true, Id = id, Entity = "World" };
-                var results = await _couchbaseContext.Collection.InsertAsync($"{fakeWorld.Entity}-{id}", fakeWorld);
-                fakeWorld.Name = "Jupiter";
-
-                //Act
-                var expected = await _worldRepo.UpsertSubDocument(id,"Name","Neptune");
-
-                //Assert
-                expected.Name.Should().Be("Neptune");
-            }
-
-            [Fact]
-            async void TestThatInsertSubDocumentWorks()
-            {
-                //Arrange - Use the Context to Create data in the Datbase
-                var id = Guid.NewGuid().ToString();
-                var fakeWorld = new World() { Name = "Mars", HasLife = true, Id = id, Entity = "World" };
-                var results = await _couchbaseContext.Collection.InsertAsync($"{fakeWorld.Entity}-{id}", fakeWorld);
-
-                //Act
-                var expected = await _worldRepo.InsertSubDocument(id,"entity", "Testing");
-
-                //Assert
-                expected.Entity.Should().Be("Testing");
             }
         }
     }
