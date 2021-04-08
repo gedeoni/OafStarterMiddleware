@@ -8,6 +8,9 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
+
+
 namespace IntegrationTests
 {
     public class WorldsApiTests : IClassFixture<ServerFixture>

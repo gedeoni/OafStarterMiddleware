@@ -26,13 +26,13 @@ namespace Application.Worlds.Commands
         private const string RoutingKey = "hello.world.created";
         private readonly ILogger<CreateWorldComandHandler> _logger;
         private readonly IWorldRepository _worldRepository;
-        private readonly IPublishEvent _publishEvent;
+        private readonly IPublishEvent _eventPublisher;
 
-        public CreateWorldComandHandler(ILogger<CreateWorldComandHandler> logger, IWorldRepository worldRepository, IPublishEvent publishEvent)
+        public CreateWorldComandHandler(ILogger<CreateWorldComandHandler> logger, IWorldRepository worldRepository, IPublishEvent eventPublisher)
         {
             _logger = logger;
             _worldRepository = worldRepository;
-            _publishEvent = publishEvent;
+            _eventPublisher = eventPublisher;
         }
 
         async public Task<World> Handle(CreateWorldComand request, CancellationToken cancellationToken)
@@ -43,7 +43,7 @@ namespace Application.Worlds.Commands
 
             EventBusPayload payload = GetPayload(createdWorld.Id);
 
-            await _publishEvent.PublishEvent(payload, RoutingKey);
+            await _eventPublisher.PublishEvent(payload, RoutingKey);
 
             return createdWorld;
         }
@@ -58,7 +58,7 @@ namespace Application.Worlds.Commands
 
         private static EventBusPayload GetPayload(string id) => new EventBusPayload {
             Id = id,
-            Ref = $"/api/world/{id}"
+            Ref = $"/api/worlds/{id}" //TODO: host baseurl
         };
     }
 }

@@ -38,7 +38,7 @@ namespace IntegrationTests
             async void TestThatCountMethodWorks()
             {
                 //Arrange - Use the Context to Create data in the Datbase
-                var id = "some-world";
+                var id = Guid.NewGuid().ToString();
                 var fakeWorld = new World() { Name = "Mars", HasLife = true, Id = id, Entity = "World" };
                 var results = await _couchbaseContext.Collection.InsertAsync(id, fakeWorld);
 
