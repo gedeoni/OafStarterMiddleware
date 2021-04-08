@@ -48,6 +48,98 @@ namespace IntegrationTests
                 //Assert
                 count.Should().Be(1);
             }
+
+            [Fact]
+            async void TestThatFindOneDocumentWorks()
+            {
+                //Arrange - Use the Context to Create data in the Datbase
+                var id = Guid.NewGuid().ToString();
+                var fakeWorld = new World() { Name = "Mars", HasLife = true, Id = id, Entity = "World" };
+                var results = await _couchbaseContext.Collection.InsertAsync($"{fakeWorld.Entity}-{id}", fakeWorld);
+
+                //Act
+                var expected = await _worldRepo.FindOneDocument(id);
+
+                //Assert
+                expected.Id.Should().Be(fakeWorld.Id);
+            }
+
+            [Fact]
+            async void TestThatInsertDocumentWorks()
+            {
+                //Arrange - Use the Context to Create data in the Datbase
+                var fakeWorld = new World() { Name = "Mars", HasLife = true, Entity = "World" };
+
+                //Act
+                var expected = await _worldRepo.InsertDocument(fakeWorld);
+
+                //Assert
+                expected.Should().BeOfType<World>();
+                expected.Name.Should().Be(fakeWorld.Name);
+            }
+
+            [Fact]
+            async void TestThatRemoveDocumentWorks()
+            {
+                //Arrange - Use the Context to Create data in the Datbase
+                var id = Guid.NewGuid().ToString();
+                var fakeWorld = new World() { Name = "Mars", HasLife = true, Id = id, Entity = "World" };
+                var results = await _couchbaseContext.Collection.InsertAsync($"{fakeWorld.Entity}-{id}", fakeWorld);
+
+                //Act
+                // The signature for the remove document method is a bit confusing. The passed in entity is not needed for the operation
+                var expected = await _worldRepo.RemoveDocument(id,fakeWorld);
+
+                //Assert
+                expected.Should().Be(id);
+            }
+
+            [Fact]
+            async void TestThatUpsertDocumentWorks()
+            {
+                //Arrange - Use the Context to Create data in the Datbase
+                var id = Guid.NewGuid().ToString();
+                var fakeWorld = new World() { Name = "Mars", HasLife = true, Id = id, Entity = "World" };
+                var results = await _couchbaseContext.Collection.InsertAsync($"{fakeWorld.Entity}-{id}", fakeWorld);
+                fakeWorld.Name = "Jupiter";
+
+                //Act
+                var expected = await _worldRepo.UpsertDocument(id,fakeWorld);
+
+                //Assert
+                expected.Name.Should().Be("Jupiter");
+            }
+
+            [Fact]
+            async void TestThatUpsertSubDocumentWorks()
+            {
+                //Arrange - Use the Context to Create data in the Datbase
+                var id = Guid.NewGuid().ToString();
+                var fakeWorld = new World() { Name = "Mars", HasLife = true, Id = id, Entity = "World" };
+                var results = await _couchbaseContext.Collection.InsertAsync($"{fakeWorld.Entity}-{id}", fakeWorld);
+                fakeWorld.Name = "Jupiter";
+
+                //Act
+                var expected = await _worldRepo.UpsertSubDocument(id,"Name","Neptune");
+
+                //Assert
+                expected.Name.Should().Be("Neptune");
+            }
+
+            [Fact]
+            async void TestThatInsertSubDocumentWorks()
+            {
+                //Arrange - Use the Context to Create data in the Datbase
+                var id = Guid.NewGuid().ToString();
+                var fakeWorld = new World() { Name = "Mars", HasLife = true, Id = id, Entity = "World" };
+                var results = await _couchbaseContext.Collection.InsertAsync($"{fakeWorld.Entity}-{id}", fakeWorld);
+
+                //Act
+                var expected = await _worldRepo.InsertSubDocument(id,"entity", "Testing");
+
+                //Assert
+                expected.Entity.Should().Be("Testing");
+            }
         }
     }
 
