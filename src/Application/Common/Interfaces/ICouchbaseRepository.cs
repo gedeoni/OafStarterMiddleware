@@ -11,7 +11,7 @@ namespace Application.Common.Interfaces
         Task<TEntity> FindOneDocument(string id);
         Task<TEntity> InsertDocument(TEntity entity);
         Task<TEntity> InsertSubDocument(string documentId, string subDocumentId, dynamic subDocumentValue);
-        Task<string> RemoveDocument(string id, TEntity entity);
+        Task<string> RemoveDocument(string id);
         Task<TEntity> UpsertDocument(string id, TEntity entity);
         Task<TEntity> UpsertSubDocument(string documentId, string subDocumentId, dynamic subDocumentValue);
     }

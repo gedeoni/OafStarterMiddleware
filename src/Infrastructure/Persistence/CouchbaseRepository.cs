@@ -179,11 +179,9 @@ namespace Infrastructure.Persistence
             return await FindOneDocument(id);
         }
 
-        public async Task<string> RemoveDocument(string id, TEntity entity)
+        public async Task<string> RemoveDocument(string id)
         {
             var start = DateTime.Now;
-
-            entity.Entity = _entity;
 
             await _couchbaseContext.Collection
                 .RemoveAsync($"{_entity}-{id}");

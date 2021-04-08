@@ -87,7 +87,7 @@ namespace IntegrationTests
                 var results = await _couchbaseContext.Collection.InsertAsync($"{fakeWorld.Entity}-{id}", fakeWorld);
 
                 //Act
-                var expected = await _worldRepo.RemoveDocument(id,fakeWorld);
+                var expected = await _worldRepo.RemoveDocument(id);
 
                 //Assert
                 expected.Should().Be(id);
