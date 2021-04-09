@@ -37,7 +37,7 @@ namespace IntegrationTests
             [Fact]
             async void TestThatCountMethodWorks()
             {
-                //Arrange - Use the Context to Create data in the Datbase
+                //Arrange - Use the Context to Create data in the Database
                 var id = Guid.NewGuid().ToString();
                 var fakeWorld = new World() { Name = "Mars", HasLife = true, Id = id, Entity = "World" };
                 var results = await _couchbaseContext.Collection.InsertAsync(id, fakeWorld);
@@ -52,7 +52,7 @@ namespace IntegrationTests
             [Fact]
             async void TestThatFindOneDocumentWorks()
             {
-                //Arrange - Use the Context to Create data in the Datbase
+                //Arrange - Use the Context to Create data in the Database
                 var id = Guid.NewGuid().ToString();
                 var fakeWorld = new World() { Name = "Mars", HasLife = true, Id = id, Entity = "World" };
                 var results = await _couchbaseContext.Collection.InsertAsync($"{fakeWorld.Entity}-{id}", fakeWorld);
@@ -67,7 +67,7 @@ namespace IntegrationTests
             [Fact]
             async void TestThatInsertDocumentWorks()
             {
-                //Arrange - Use the Context to Create data in the Datbase
+                //Arrange - Use the Context to Create data in the Database
                 var fakeWorld = new World() { Name = "Mars", HasLife = true, Entity = "World" };
 
                 //Act
@@ -81,7 +81,7 @@ namespace IntegrationTests
             [Fact]
             async void TestThatRemoveDocumentWorks()
             {
-                //Arrange - Use the Context to Create data in the Datbase
+                //Arrange - Use the Context to Create data in the Database
                 var id = Guid.NewGuid().ToString();
                 var fakeWorld = new World() { Name = "Mars", HasLife = true, Id = id, Entity = "World" };
                 var results = await _couchbaseContext.Collection.InsertAsync($"{fakeWorld.Entity}-{id}", fakeWorld);
@@ -96,7 +96,7 @@ namespace IntegrationTests
             [Fact]
             async void TestThatUpsertDocumentWorks()
             {
-                //Arrange - Use the Context to Create data in the Datbase
+                //Arrange - Use the Context to Create data in the Database
                 var id = Guid.NewGuid().ToString();
                 var fakeWorld = new World() { Name = "Mars", HasLife = true, Id = id, Entity = "World" };
                 var results = await _couchbaseContext.Collection.InsertAsync($"{fakeWorld.Entity}-{id}", fakeWorld);
