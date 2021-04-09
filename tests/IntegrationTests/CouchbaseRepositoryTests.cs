@@ -2,9 +2,6 @@ using System;
 namespace IntegrationTests
 {
     using System;
-    using System.Collections.Generic;
-    using System.Net.Http;
-    using System.Text.Json;
     using Application.Common.Interfaces;
     using Domain.Entities;
     using FluentAssertions;

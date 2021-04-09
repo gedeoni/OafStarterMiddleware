@@ -27,7 +27,7 @@ services:
     project: src/Api/Api.csproj
     bindings:
       - port: 5000
-  - name: worldconsumer
-    project: src/WorldConsumer/WorldConsumer.csproj
-    bindings:
-      - port: 3000
+  # - name: worldconsumer
+  #   project: src/WorldConsumer/WorldConsumer.csproj
+  #   bindings:
+  #     - port: 3000
