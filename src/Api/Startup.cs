@@ -1,9 +1,11 @@
+using System.Text.Json;
 using Api.Filters;
 using Application;
 using FluentValidation.AspNetCore;
 using Infrastructure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -43,7 +45,7 @@ namespace Api
             }
 
             app.UseSwagger();
-            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Api v1"));
+            app.UseSwaggerUI(c => c.SwaggerEndpoint("./v1/swagger.json", "Api v1"));
 
             app.UseHttpsRedirection();
 
@@ -51,8 +53,25 @@ namespace Api
 
             app.UseAuthorization();
 
-            app.UseEndpoints(endpoints => {
+            app.UseEndpoints(endpoints =>
+            {
                 endpoints.MapControllers();
+                endpoints.MapGet("/", async context =>
+                {
+                    if(!env.IsDevelopment())
+                    {
+                        context.Request.Path = Configuration.GetValue<string>("Oaf-NetCore-Starter-MW:BasePath");
+                    }
+                    var info = new
+                    {
+                        name = Configuration.GetValue<string>("Oaf-NetCore-Starter-MW:Name"),
+                        version = Configuration.GetValue<string>("Oaf-NetCore-Starter-MW:Version"),
+                        health = $"{context.Request.Scheme}://{context.Request.Host}{context.Request.Path}actuator/health",
+                        documentation = $"{context.Request.Scheme}://{context.Request.Host}{context.Request.Path}swagger",
+                    };
+                    var infoJson = JsonSerializer.Serialize(info);
+                    await context.Response.WriteAsync(infoJson);
+                });
             });
         }
     }

@@ -1,0 +1,12 @@
+# Sync Gateway configmap
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    org.oneacrefund.project: {{ .Release.Name }}
+    org.oneacrefund.app: {{ .Release.Name }}
+stringData:
+  appsettings.json: |-
+    {{- .Values.appSettings | toPrettyJson | nindent 4 }}

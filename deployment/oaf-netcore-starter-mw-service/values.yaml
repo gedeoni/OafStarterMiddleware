@@ -1,0 +1,172 @@
+# Default values for helm-template.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+init:
+  # Should we wait for Couchbase? 0 = no, else wait time in s
+  waitCouchbase: 300
+  waitRabbit: 300
+
+image:
+  repository: oaftech.azurecr.io/oneacrefund/oafnetcorestartermwserviceapi
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+couchbaseConfig:
+  bucket_size: 256Mi
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 80
+  name: http
+  protocol: TCP
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths: []
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+
+# Couchbase init container
+couchbaseInit:
+  imageTag: '6.6.1'
+  # How long to wait for couchbase connection? (in seconds, 0 = disable)
+  wait: 300
+  # List of N1QL scripts to be run prior to starting up the main pods
+  # Note that they will be executed (in order) without any error handling / reporting / retrying
+  scripts:
+  # Index creation is idempotent, so we can run it even if it exists...
+  - CREATE PRIMARY INDEX ON \`$COUCHBASE_BUCKET\` USING GSI;
+  - create index Index_Type on \`$COUCHBASE_BUCKET\`(type);
+  # Just a quick health check...
+  - SELECT COUNT(*) from \`$COUCHBASE_BUCKET\`;
+
+
+
+# helm-template Project
+helmTemplate:
+  version: 0.0.1
+  config:
+    interface: ":80"
+    databases:
+      rostercache:
+        enable_shared_bucket_access: true
+        import_docs: true
+        num_index_replicas: 0
+        use_views: true
+        allow_conflicts: false
+        revs_limit: 20
+
+appSettings: {
+  "Serilog": {
+    "Using": ["Serilog.Formatting.Compact"],
+    "MinimunLevel": {
+      "Default": "Information",
+      "Override": {
+        "Microsoft": "Warning",
+        "System": "Warning"
+      }
+    },
+    "Enrich": [
+      "FromLogContext",
+      "WithMachineName",
+      "WithProcessId",
+      "WithThreadId"
+    ],
+    "WriteTo": [
+      {
+        "Name": "Console",
+        "Args": {
+          "formatter": "Serilog.Formatting.Compact.CompactJsonFormatter, Serilog.Formatting.Compact"
+        }
+      }
+    ]
+  },
+  "DefaultEmailAccount": {
+    "Email": "some-email",
+    "Password": "some-password",
+    "Port": 587,
+    "EnableSsl": true
+  },
+  "RabbitMQ": {
+    "HostName": "localhost",
+    "Exchange": "oaf",
+    "RoutingKeys": ["hello.world.created"],
+    "Port": 5672,
+    "ConnectRetries": 5,
+    "ConnectRetriesTimeSpan": 5,
+    "VirtualHost": "/"
+  },
+  "AllowedHosts": "*",
+  "Couchbase": {
+    "UseSsl": false,
+    "BucketName": "Worlds",
+    "Username": "world-citizen",
+    "Password": "changeme"
+  },
+  "ConnectionStrings": {
+    "couchbase": {
+      "data": "couchbase://localhost"
+    },
+    "rabbit": {
+      "application": "amqp://guest:guest@rabbit:5672/"
+    }
+  }
+}

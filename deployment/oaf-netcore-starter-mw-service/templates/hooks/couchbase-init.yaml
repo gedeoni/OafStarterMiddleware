@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ .Release.Name }}-index-hook"
+  labels:
+    org.oneacrefund.project: zra
+    org.oneacrefund.app: {{ .Release.Name }}
+    org.oneacrefund.instance: {{ .Release.Name }}
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  template:
+    metadata:
+      name: "{{ .Release.Name }}"
+      labels:
+        org.oneacrefund.project: zra
+        org.oneacrefund.app: tax-signature-index-setup
+        org.oneacrefund.instance: {{ .Release.Name }}
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: init-couchbase
+          image: couchbase/server:{{ .Values.couchbaseInit.imageTag }}
+          command:
+          - sh
+          - -c
+          - |
+            {{- range .Values.couchbaseInit.scripts }}
+            timeout 10 cbq -e $COUCHBASE_HOST -u $COUCHBASE_USER -p $COUCHBASE_PASSWORD --script="{{ . }}"
+            {{- end }}
+          env:
+          # Hack to silence the error reading the history file (since user couchbase does not have a home dir)
+          - name: HOME
+            value: /tmp
+          - name: COUCHBASE_HOST
+            value: {{ include "couchbase_connStr" . | quote  }}
+          - name: COUCHBASE_USER
+            value: {{ include "couchbase_username" . | quote }}
+          - name: COUCHBASE_BUCKET
+            value: {{ include "couchbase_bucket" . | quote }}
+          - name: COUCHBASE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "couchbase_username" . }}-password
+                key: password
+                      
+                  

@@ -1,0 +1,12 @@
+# Bucket
+apiVersion: couchbase.com/v2
+kind: CouchbaseBucket
+metadata:
+  name: {{ include "couchbase_bucket" . | quote }}
+  namespace: {{ include "couchbase_namespace" . | quote }}
+  labels:
+    cluster: {{ include "couchbase_clusterName" . | quote }}
+spec:
+  memoryQuota: {{ include "couchbase_bucket_size" . | quote }}
+  # The number of bucket replicates - THIS MUST ALWAYS BE > 0
+  replicas: 1

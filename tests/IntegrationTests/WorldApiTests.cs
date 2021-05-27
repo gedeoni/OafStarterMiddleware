@@ -1,38 +1,42 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Application.Common.Interfaces;
 using Domain.Entities;
 using FluentAssertions;
+using Infrastructure.Persistence;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
-
-[assembly: CollectionBehavior(DisableTestParallelization = true)]
-
+using NUnit.Framework;
 
 namespace IntegrationTests
 {
-    public class WorldsApiTests : IClassFixture<ServerFixture>
+    using static Testing;
+
+    public class WorldAPITests
     {
-        private readonly HttpClient _testClient;
-        private readonly IWorldRepository _worldRepo;
-        private readonly ServerFixture _fixture;
-        public WorldsApiTests(ServerFixture fixture)
+        private IWorldRepository _worldRepo;
+        private HttpClient _testClient;
+
+        [SetUp]
+        public async Task ResetDatabase()
         {
-            using var scope = ServerFixture.serviceScopeFactory.CreateScope();
+            using var scope = serviceScopeFactory.CreateScope();
             _worldRepo = scope.ServiceProvider.GetService<IWorldRepository>();
-            _testClient = fixture.client;
-            _fixture = fixture;
+            _testClient = client;
+            await Task.Delay(100);
+            await FlushBucket();
         }
 
-        [Fact]
-        async void TestThatGetWorldsEndpointWorks()
+        [Test]
+        public async Task TestThatGetWorldsEndpointWorks()
         {
             //Arrange - Put the necessary data in the Database
             var fakeWorld = new World() { Name = "Mars", HasLife = true };
             var savedWorld = await _worldRepo.InsertDocument(fakeWorld);
+            await Task.Delay(100);
 
             //Act - get all worlds from the API
             var response = await _testClient.GetAsync("/api/worlds");
@@ -44,25 +48,26 @@ namespace IntegrationTests
             expected.Should().HaveCount(1);
         }
 
-        [Fact]
-        async void TestThatGetWorldEndpointWorks()
+        [Test]
+        public async Task TestThatGetWorldEndpointWorks()
         {
-           //Arrange - Put the necessary data in the Database
+            //Arrange - Put the necessary data in the Database
             var fakeWorld = new World() { Name = "Jupiter", HasLife = true };
             var savedWorld = await _worldRepo.InsertDocument(fakeWorld);
+            await Task.Delay(100);
 
             //Act - get a world from the API
-            var response = await _testClient.GetAsync($"/api/worlds?id={savedWorld.Id}");
+            var response = await _testClient.GetAsync($"/api/worlds/{savedWorld.Id}");
             var responseString = await response.Content.ReadAsStringAsync();
-            var expected = JsonSerializer.Deserialize<List<World>>(responseString, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true });
+            var expected = JsonSerializer.Deserialize<World>(responseString, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true });
 
             //Assert - check if the worlds returned are the same as the ones created
             response.StatusCode.Should().Equals(200);
-            expected[0].Should().BeEquivalentTo<World>(savedWorld);
+            expected.Should().BeEquivalentTo<World>(savedWorld);
         }
 
-        [Fact]
-        async void TestThatPostWorldsEndpointWorks()
+        [Test]
+        public async Task TestThatPostWorldsEndpointWorks()
         {
             //Arrange - Put the necessary data in the Database
             var fakeWorld = new World() { Name = "Earth", HasLife = true };
@@ -70,11 +75,13 @@ namespace IntegrationTests
 
             //Act - post a world from the API
             HttpResponseMessage response = await _testClient.PostAsync("/api/worlds", httpContent);
+            await Task.Delay(100);
+
             string responseString = await response.Content.ReadAsStringAsync();
             var expected = JsonSerializer.Deserialize<World>(responseString, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true });
 
             //Assert - check if the worlds returned are the same as the ones created
-            response.StatusCode.Should().Equals(200);
+            response.StatusCode.Should().Be(201);
             expected.Name.Should().Be(fakeWorld.Name);
             expected.HasLife.Should().Be(fakeWorld.HasLife);
         }
