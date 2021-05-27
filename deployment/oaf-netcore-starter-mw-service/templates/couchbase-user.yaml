@@ -1,0 +1,59 @@
+
+{{- $namespace := include "couchbase_namespace" . -}}
+{{- $clusterName := include "couchbase_clusterName" . -}}
+{{- $username := include "couchbase_username" . -}}
+
+# CouchbaseUser password secret
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  namespace: {{ $namespace | quote }}
+  name: {{ $username }}-password
+data:
+  password: {{ include "couchbase_password" . | b64enc }}
+
+---
+# CouchbaseUser with that password
+# Labels needs to match the cluster's label selector
+apiVersion: couchbase.com/v2
+kind: CouchbaseUser
+metadata:
+  name: {{ $username | quote }}
+  namespace: {{ $namespace | quote }}
+  labels:
+    cluster: {{ $clusterName | quote }}
+spec:
+  authDomain: local 
+  authSecret: {{ $username }}-password 
+---
+# Role definition
+# Labels needs to match the cluster's label selector
+apiVersion: couchbase.com/v2
+kind: CouchbaseGroup
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: {{ $namespace | quote }}
+  labels:
+    cluster: {{ $clusterName | quote }}
+spec:
+  roles:
+  # Need both admin and full access
+  - name: bucket_full_access 
+    bucket: {{ include "couchbase_bucket" . | quote }}
+  - name: bucket_admin
+    bucket: {{ include "couchbase_bucket" . | quote }}
+---
+# CouchbaseRoleBinding for that user (no label selection for these...)
+apiVersion: couchbase.com/v2
+kind: CouchbaseRoleBinding
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: {{ $namespace | quote }}
+spec:
+  subjects:
+  - kind: CouchbaseUser
+    name: {{ $username | quote }}
+  roleRef:
+    kind: CouchbaseGroup
+    name: {{ .Chart.Name }}

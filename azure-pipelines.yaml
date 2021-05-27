@@ -1,3 +1,8 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
 trigger:
   branches:
     include:
@@ -15,79 +20,69 @@ pr:
 pool:
   vmImage: "ubuntu-latest"
 
-name: WORLD_$(Date:yyyyMMdd)$(Rev:.r)
+name: Tax_Signature_$(Date:yyyyMMdd)$(Rev:.r)
+
+variables:
+  NUGET_PLUGIN_HANDSHAKE_TIMEOUT_IN_SECONDS: 60
+  NUGET_PLUGIN_REQUEST_TIMEOUT_IN_SECONDS: 60
 
 steps:
+
   - task: UseDotNet@2
     displayName: Install .Net Core 5.0
     inputs:
       packageType: 'sdk'
-      version: '5.0.x'
+      version: '5.0.100'
+
+  - task: UseDotNet@2
+    displayName: Install .Net Core 3.1.0
+    inputs:
+      packageType: 'sdk'
+      version: '3.1.x'
+
+  - task: NuGetToolInstaller@1
+    inputs:
+      versionSpec: '5.9.1'
+      checkLatest: true
+
+  - task: NuGetCommand@2
+    displayName: "Restore from Nuget"
+    inputs:
+      command: 'restore'
+      restoreSolution: '**/*.sln'
+      feedsToUse: 'select'
+      vstsFeed: '67cdb440-862d-4fe0-afc0-6524c50e366c'
+      noCache: true
+      disableParallelProcessing: true
 
   - script: |
-      INFO=`dotnet --info`
-      echo "##vso $INFO"
-    displayName: Getting dotnet info
-  - task: DotNetCoreCLI@2
-    inputs:
-      command: restore
-      verbosityRestore: 'Detailed'
-  - script: |
-      VERSION_TAG=`git describe --abbrev=0 --tags 2&>/dev/null || echo 0.0.1`
-      echo "##vso[task.setvariable variable=VERSION_TAG]$VERSION_TAG"
-      IMAGE_TAGS=$VERSION_TAG
-      if [[ "$(Build.SourceBranch)" == "refs/heads/develop" ]]; then IMAGE_TAGS="$IMAGE_TAGS,latest"; fi;
-      echo Tags: $IMAGE_TAGS
-      echo "##vso[task.setvariable variable=IMAGE_TAGS]$IMAGE_TAGS"
+       VERSION_TAG=`git describe --abbrev=0 --tags`
+        echo "##vso[task.setvariable variable=VERSION_TAG]$VERSION_TAG"
+
+        IMAGE_TAGS="${VERSION_TAG}_$(Build.SourceVersion)"
+        echo "##vso[task.setvariable variable=IMAGE_SEMANTIC_HASH]$IMAGE_TAGS"
+        echo Tags: $IMAGE_TAGS
+        echo "##vso[task.setvariable variable=IMAGE_TAGS]$IMAGE_TAGS"
     displayName: Get git tag
+
   - task: Docker@2
     displayName: Login to Azure registry
     inputs:
       containerRegistry: azurecr-oaf
       command: "login"
 
-  # - task: SonarCloudPrepare@1
-  #   enabled: false
-  #   continueOnError: true
-  #   inputs:
-  #     SonarCloud: "sonar-oaf"
-  #     organization: "one-acre-fund"
-  #     scannerMode: "CLI"
-  #     configMode: "manual"
-  #     cliProjectKey: "one-acre-fund_mw-oaf-starter"
-  #     cliProjectName: "mw-oaf-starter"
-  #     cliSources: "."
+  - task: SonarCloudPrepare@1
+    enabled: true
+    continueOnError: true
+    inputs:
+      SonarCloud: 'sonar-oaf'
+      organization: 'one-acre-fund'
+      scannerMode: 'CLI'
+      configMode: 'manual'
+      cliProjectKey: 'oaf-netcore-starter-mw-service'
+      cliProjectName: 'oaf-netcore-starter-mw-service'
+      cliSources: '.'
 
-  # See https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/build/dotnet-core-cli?view=azure-devops
-  # TODO:
-  # Capture and publish coverage
-  # - task: DotNetCoreCLI@2
-  #   displayName: Run and publish tests
-  #   inputs:
-  #     command: test
-  #     projects: 'tests/**/*.csproj'
-  #     arguments: '--configuration Release'
-  #     publishTestResults: true
-
-  # - task: PublishCodeCoverageResults@1
-  #   condition: succeededOrFailed()
-  #   continueOnError: true
-  #   inputs:
-  #     codeCoverageTool: Cobertura
-  #     summaryFileLocation: "$(System.DefaultWorkingDirectory)/**/*coverage.xml"
-  #     reportDirectory: "$(System.DefaultWorkingDirectory)/**/coverage"
-
-  # - task: SonarCloudAnalyze@1
-  #   enabled: false
-  #   condition: succeededOrFailed()
-  #   continueOnError: true
-
-  # - task: SonarCloudPublish@1
-  #   enabled: false
-  #   condition: succeededOrFailed()
-  #   continueOnError: true
-  #   inputs:
-  #     pollingTimeoutSec: "300"
 
   # This is where the magic happens
   # TODO:
@@ -95,58 +90,155 @@ steps:
   # - tag with a proper version
   - script: |
       echo Installing tye...
-      dotnet tool install -g Microsoft.Tye --version "0.6.0-alpha.21070.5"
+      dotnet tool install -g Microsoft.Tye --version "0.6.0-alpha.21070.5" --ignore-failed-sources
 
       echo Building images...
-      tye build
+      tye build --verbosity Debug
+
       echo Done - current images:
       docker images
-      echo Tagging images with ${VERSION_TAG}:
-      docker tag worldconsumer:1.0.0  oaftech.azurecr.io/oneacrefund/worldconsumer:${VERSION_TAG}
-      docker tag notificationapi:1.0.0   oaftech.azurecr.io/oneacrefund/notificationapi:${VERSION_TAG}
-      echo Tagging images with latest:
-      docker tag worldconsumer:1.0.0  oaftech.azurecr.io/oneacrefund/worldconsumer:latest
-      docker tag notificationapi:1.0.0   oaftech.azurecr.io/oneacrefund/notificationapi:latest
+
+      echo Tagging images with ${IMAGE_TAGS}:
+      docker tag taxsignatureserviceapi:1.0.0  oaftech.azurecr.io/oneacrefund/oafnetcorestartermwserviceapi:${IMAGE_TAGS}
+
       echo Final image list:
       docker images | grep oaftech.azurecr.io
-    continueOnError: true
+    continueOnError: false
     displayName: "Build images"
+
   # Push all images!
+    # See https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/build/dotnet-core-cli?view=azure-devops
+  # TODO:
+  # Capture and publish coverage
+
+  - task: Bash@3
+    displayName: Rename appsettings file
+    inputs:
+      targetType: 'inline'
+      script: |
+        mv $(System.DefaultWorkingDirectory)/src/config/appsettings.Example.json \
+          $(System.DefaultWorkingDirectory)/src/config/appsettings.Testing.json
+
+
+  - task: Bash@3
+    displayName: Run couchbase
+    inputs:
+     targetType: 'inline'
+     script: |
+        docker run -d -p 8091:8091 -p 8093:8093 -p 8094:8094 -p 11210:11210 --name couchbase jeremiahchienda/couchbase-starter:latest
+
+  - task: Bash@3
+    displayName: Run rabbitMQ
+    inputs:
+     targetType: 'inline'
+     script: |
+        docker run -d -p 5672:5672 -p 15672:15672 --name rabbitmq jeremiahchienda/oaf-rabbit-starter:latest
+
+
+  - task: Bash@3
+    displayName: Wait for couchbase
+    inputs:
+      targetType: 'inline'
+      script: |
+          # until $(curl --output /dev/null --silent --head --fail http://localhost:8091); do
+          #   printf '.'
+          #   sleep 5
+          # done
+          sleep 15
+
+  - task: Bash@3
+    displayName: Docker ps
+    inputs:
+      targetType: 'inline'
+      script: |
+        docker ps && \
+        docker logs couchbase --tail 10 && \
+        curl http://localhost:8091/ui/index.html
+
+  - task: Bash@3
+    displayName: Create values file
+    inputs:
+      targetType: 'inline'
+      script: |
+          cat <<EOF > env-config.json
+          {
+              "USERNAME": "$USERNAME",
+              "PASSWORD": "$PASSWORD",
+              "BUCKET_NAME": "$BUCKET_NAME"
+          }
+          EOF
+  - task: replacetokens@3
+    inputs:
+      rootDirectory: '$(System.DefaultWorkingDirectory)/src/config'
+      targetFiles: '*.json'
+      encoding: 'auto'
+      writeBOM: true
+      actionOnMissing: 'warn'
+      keepToken: false
+      tokenPrefix: '#{'
+      tokenSuffix: '}#'
+      useLegacyPattern: false
+      enableTransforms: false
+      enableTelemetry: true
+
+  - task: DotNetCoreCLI@2
+    displayName: Run and publish tests
+    inputs:
+      command: test
+      publishTestResults: true
+
+  - task: PublishCodeCoverageResults@1
+    condition: succeededOrFailed()
+    continueOnError: true
+    inputs:
+      codeCoverageTool: Cobertura
+      summaryFileLocation: "$(System.DefaultWorkingDirectory)/**/*coverage.xml"
+      reportDirectory: "$(System.DefaultWorkingDirectory)/**/coverage"
+
+  - task: SonarCloudAnalyze@1
+    enabled: false
+    condition: succeededOrFailed()
+    continueOnError: true
+
+  - task: SonarCloudPublish@1
+    enabled: false
+    condition: succeededOrFailed()
+    continueOnError: true
+    inputs:
+      pollingTimeoutSec: "300"
+
   - task: Docker@2
-    displayName: Publish worldconsumer
+    displayName: Publish autosaveconsumer
     # Only publish develop branch
     #condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
     inputs:
       containerRegistry: azurecr-oaf
-      repository: oneacrefund/worldconsumer
-      # Dockerfile: containers/roster-dataset.Dockerfile
+      repository: oneacrefund/oafnetcorestartermwserviceapi
       command: push
       tags: '$(IMAGE_TAGS)'
 
-  - task: Docker@2
-    displayName: Publish notificationapi
-    # Only publish develop branch
-    #condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
-    inputs:
-      containerRegistry: azurecr-oaf
-      repository: oneacrefund/notificationapi
-      # Dockerfile: containers/refresh.Dockerfile
-      command: push
-      tags: '$(IMAGE_TAGS)'
 
   - task: HelmInstaller@1
     inputs:
       helmVersionToInstall: latest
 
+  - task: Bash@3
+    displayName: Use latest image tag
+    inputs:
+      targetType: 'inline'
+      script: |
+        sed -i 's/tag:.*/tag: $(IMAGE_TAGS)/' ./deployment/oaf-netcore-starter-mw-service/values.yaml
+
   - script: |
       # Lint, as sanity check
-      helm lint deployment/payments
+      helm lint deployment/oaf-netcore-starter-mw-service
     displayName: Validate Helm chart
+
   - task: HelmDeploy@0
     displayName: Package Helm Chart
     inputs:
       command: package
-      chartPath: $(System.DefaultWorkingDirectory)/deployment/mw-oaf-starter
+      chartPath: $(System.DefaultWorkingDirectory)/deployment/oaf-netcore-starter-mw-service
       chartVersion: '$(VERSION_TAG)'
       destination: $(Build.ArtifactStagingDirectory)
       updatedependency: true
@@ -157,5 +249,6 @@ steps:
     # condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
     inputs:
       PathtoPublish: "$(Build.ArtifactStagingDirectory)"
-      ArtifactName: "mw-oaf-starter"
+      ArtifactName: "oaf-netcore-starter-mw-service"
       publishLocation: "Container"
+

@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    org.oneacrefund.project: {{ .Chart.Name }}
+    org.oneacrefund.app: {{ .Chart.Name }}
+    org.oneacrefund.instance: {{ .Chart.Name }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      org.oneacrefund.instance: {{ .Chart.Name }}
+  template:
+    metadata:
+      annotations:
+        checksum/couchbase-password: {{ include "couchbase_password" . | sha256sum }}
+        co.elastic.logs/enabled: "true"
+      labels:
+        org.oneacrefund.project: {{ .Chart.Name }}
+        org.oneacrefund.app: {{ .Chart.Name }}
+        org.oneacrefund.instance: {{ .Chart.Name }}
+    spec:
+      initContainers:
+      {{- if .Values.init.waitRabbit }}
+      # Wait for RabbitMQ to be up
+      - name: wait-rabbit
+        image: busybox
+        command:
+        - sh
+        - -c
+        - timeout {{ .Values.init.waitRabbit }} sh -c "until nc -zv -w 2 $RABBIT_HOST $RABBIT_PORT; do echo Retrying && sleep 2; done;"
+        env:
+        - name: RABBIT_HOST
+          value: {{ include "rabbitmq_host" . | quote }}
+        - name: RABBIT_PORT
+          value: {{ include "rabbitmq_port" . | quote }}
+        {{- end }}
+      {{- if .Values.init.waitCouchbase }}
+      # Wait for Couchbase
+      - name: wait-couchbase
+        image: couchbase/server:6.6.0
+        env:
+          - name: COUCHBASE_USER
+            value: {{ include "couchbase_username" . | quote }}
+          - name: COUCHBASE_BUCKET
+            value: {{ include "couchbase_bucket" . | quote }}
+          - name: COUCHBASE_HOST
+            value: {{ include "couchbase_connStr" . | quote }}
+          - name: COUCHBASE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "couchbase_username" . }}-password
+                key: password
+        command:
+        - sh
+        - -c
+        - timeout {{ .Values.init.waitCouchbase }} sh -c "while /app/tools/sdk-doctor-linux diagnose $COUCHBASE_HOST/$COUCHBASE_BUCKET -u $COUCHBASE_USER -p $COUCHBASE_PASSWORD | fgrep '[ERRO]'; do sleep 2; done"
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          # livenessProbe:
+          #   httpGet:
+          #     path: /api/worlds
+          #     port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /api/worlds
+          #     port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /config 
+              readOnly: true
+      volumes:
+      - name: config
+        secret:
+          secretName: {{ .Release.Name }}
