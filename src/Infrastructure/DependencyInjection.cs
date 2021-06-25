@@ -1,12 +1,16 @@
-using Application.Common.Interfaces;
+using Oaf.Rabbit.Sdk;
+using Newtonsoft.Json;
+using Oaf.Rabbit.Sdk.Options;
+using Newtonsoft.Json.Converters;
+using Couchbase.Core.IO.Serializers;
+using Microsoft.Extensions.Configuration;
 using Couchbase.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
+
 using Infrastructure.Email;
 using Infrastructure.Persistence;
+using Application.Common.Interfaces;
 using Infrastructure.RabbitMqEventBus;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Oaf.Rabbit.Sdk;
-using Oaf.Rabbit.Sdk.Options;
 
 namespace Infrastructure
 {
@@ -19,6 +23,14 @@ namespace Infrastructure
             services.AddCouchbase(options => {
                 options.EnableTls = false;
                 options.ConnectionString = Configuration.GetConnectionString("couchbase:data");
+                var serializer = new DefaultSerializer();
+
+                serializer.SerializerSettings.Converters.Add(new StringEnumConverter());
+                serializer.SerializerSettings.DefaultValueHandling = DefaultValueHandling.Ignore;
+                serializer.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
+                serializer.DeserializationSettings.Converters.Add(new StringEnumConverter());
+
+                options.Serializer = serializer;
                 options.WithCredentials(couchbaseOptions.Username, couchbaseOptions.Password);
             });
 
