@@ -7,36 +7,28 @@ using Application.Common.Interfaces;
 using Couchbase;
 using Couchbase.KeyValue;
 using Couchbase.Query;
-using Domain.Common.Attributes;
+using Domain.Common.Extensions;
 using Domain.Common.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Persistence
 {
-    public abstract class CouchbaseRepository<TEntity> : ICouchbaseRepository<TEntity> where TEntity : AuditableEntity, ICouchbaseEntity
+    public abstract class CouchbaseRepository<TEntity> : ICouchbaseRepository<TEntity> where TEntity : CouchbaseEntity<TEntity>, IAuditableEntity
     {
         protected readonly ICouchbaseContext _couchbaseContext;
-        protected readonly string _entity;
         protected readonly string _bucketName;
-        private readonly IAttributesProcessor _attrProcessor;
         protected readonly ILogger<CouchbaseRepository<TEntity>> _logger;
-
+        protected readonly string _entity = typeof(TEntity).GetEntityName();
         protected CouchbaseRepository(
             ICouchbaseContext couchbaseContext,
             ILogger<CouchbaseRepository<TEntity>> logger,
-            IConfiguration config,
-            IAttributesProcessor attrProcessor
+            IConfiguration config
         )
         {
             _couchbaseContext = couchbaseContext;
             _logger = logger;
             _bucketName = config.GetSection("Couchbase:BucketName").Value;
-            EntityNameAttribute _entityNameAttr = _attrProcessor
-                .GetAttributeInstance<EntityNameAttribute>(typeof(TEntity));
-            _entity = _entityNameAttr != null
-                ? _entityNameAttr.Name
-                : typeof(TEntity).Name;
         }
 
         async public Task<TEntity> FindOneDocument(string id)
@@ -117,13 +109,12 @@ namespace Infrastructure.Persistence
         {
             var start = DateTime.Now;
 
-            var id = entity.Id == null ? Guid.NewGuid().ToString() : entity.Id;
-            entity.Entity = _entity;
+            var id = entity.Id ?? Guid.NewGuid().ToString();
             entity.Id = id;
             entity.CreatedAt = DateTime.Now;
             entity.UpdatedAt = DateTime.Now;
 
-            await _couchbaseContext.Collection.InsertAsync($"{_entity}-{id}", entity);
+            await _couchbaseContext.Collection.InsertAsync($"{_entity}-{entity.Id}", entity);
 
             _logger.LogInformation(
                 "CouchbaseOperation: Executed Insert operation on {Entity} with {Id} in {Elapsed:000}ms",
@@ -131,7 +122,7 @@ namespace Infrastructure.Persistence
                 entity.Id,
                 DateTime.Now.Subtract(start).Milliseconds);
 
-            return await FindOneDocument(id);
+            return await FindOneDocument(entity.Id);
         }
 
         public async Task<TEntity> InsertSubDocument(string documentId, string subDocumentId, dynamic subDocumentValue)
@@ -173,8 +164,6 @@ namespace Infrastructure.Persistence
         public async Task<TEntity> UpsertDocument(string id, TEntity entity)
         {
             var start = DateTime.Now;
-
-            entity.Entity = _entity;
 
             await _couchbaseContext.Collection
                 .UpsertAsync($"{_entity}-{id}", entity);

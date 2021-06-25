@@ -1,6 +1,8 @@
 using System;
 using System.Threading.Tasks;
 using Application.Common.Interfaces;
+using Domain.Common.Extensions;
+using Domain.Common.Interfaces;
 using Domain.Entities;
 using FluentAssertions;
 using Infrastructure.Persistence;
@@ -11,6 +13,13 @@ using NUnit.Framework;
 namespace IntegrationTests
 {
     using static Testing;
+
+    public sealed class TestEntity : CouchbaseEntity<TestEntity>, IAuditableEntity
+    {
+        public static readonly string ENTITY_NAME = "test-entity";
+        public DateTime? CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+    }
 
     public class CouchbaseRepositoryTests
     {
@@ -36,7 +45,7 @@ namespace IntegrationTests
         {
             //Arrange - Use the Context to Create data in the Datbase
             var id = Guid.NewGuid().ToString();
-            var fakeWorld = new World() { Name = "Mars", HasLife = true, Id = id, Entity = "World" };
+            var fakeWorld = new World() { Name = "Mars", HasLife = true, Id = id };
             var results = await _couchbaseContext.Collection.InsertAsync(id, fakeWorld);
             await Task.Delay(100); //Delay after insertion to do some async magic
             //Act
@@ -51,7 +60,7 @@ namespace IntegrationTests
         {
             //Arrange - Use the Context to Create data in the Database
             var id = Guid.NewGuid().ToString();
-            var fakeWorld = new World() { Name = "Mars", HasLife = true, Id = id, Entity = "World" };
+            var fakeWorld = new World() { Name = "Mars", HasLife = true, Id = id };
             var results = await _couchbaseContext.Collection.InsertAsync($"{fakeWorld.Entity}-{id}", fakeWorld);
 
             //Act
@@ -65,7 +74,7 @@ namespace IntegrationTests
         public async Task TestThatInsertDocumentWorks()
         {
             //Arrange - Use the Context to Create data in the Database
-            var fakeWorld = new World() { Name = "Mars", HasLife = true, Entity = "World" };
+            var fakeWorld = new World() { Name = "Mars", HasLife = true };
 
             //Act
             var expected = await _worldRepo.InsertDocument(fakeWorld);
@@ -73,6 +82,7 @@ namespace IntegrationTests
             //Assert
             expected.Should().BeOfType<World>();
             expected.Name.Should().Be(fakeWorld.Name);
+            expected.Entity.Should().Be(fakeWorld.Entity);
         }
 
         [Test]
@@ -80,7 +90,7 @@ namespace IntegrationTests
         {
             //Arrange - Use the Context to Create data in the Database
             var id = Guid.NewGuid().ToString();
-            var fakeWorld = new World() { Name = "Mars", HasLife = true, Id = id, Entity = "World" };
+            var fakeWorld = new World() { Name = "Mars", HasLife = true, Id = id };
             var results = await _couchbaseContext.Collection.InsertAsync($"{fakeWorld.Entity}-{id}", fakeWorld);
             await Task.Delay(100); //Delay after insertion to do some async magic
 
@@ -96,7 +106,7 @@ namespace IntegrationTests
         {
             //Arrange - Use the Context to Create data in the Database
             var id = Guid.NewGuid().ToString();
-            var fakeWorld = new World() { Name = "Mars", HasLife = true, Id = id, Entity = "World" };
+            var fakeWorld = new World() { Name = "Mars", HasLife = true, Id = id };
             var results = await _couchbaseContext.Collection.InsertAsync($"{fakeWorld.Entity}-{id}", fakeWorld);
             fakeWorld.Name = "Jupiter";
 
@@ -105,6 +115,23 @@ namespace IntegrationTests
 
             //Assert
             expected.Name.Should().Be("Jupiter");
+        }
+
+        [Test]
+        public async Task TestThatPreferredEntityNameIsSet()
+        {
+            //Arrange - Use the Context to Create data in the Database
+            var id = Guid.NewGuid().ToString();
+            var fakeEntity = new TestEntity() { Id = id };
+            var results = await _couchbaseContext.Collection.InsertAsync($"{fakeEntity.Entity}-{id}", fakeEntity);
+
+            //Act
+            var result = await _couchbaseContext.Collection
+                .GetAsync($"{typeof(TestEntity).GetEntityName()}-{id}");
+
+            //Assert
+            var expected = result.ContentAs<TestEntity>();
+            expected.Entity.Should().Be(TestEntity.ENTITY_NAME);
         }
     }
 }

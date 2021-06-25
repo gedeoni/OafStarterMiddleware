@@ -4,7 +4,7 @@ using Domain.Common.Interfaces;
 
 namespace Application.Common.Interfaces
 {
-    public interface ICouchbaseRepository<TEntity> where TEntity : AuditableEntity, ICouchbaseEntity
+    public interface ICouchbaseRepository<TEntity> where TEntity : CouchbaseEntity<TEntity>, IAuditableEntity
     {
         Task<IEnumerable<TEntity>> FindAllDocuments(int limit = 20, int offset = 0);
         Task<int> Count();

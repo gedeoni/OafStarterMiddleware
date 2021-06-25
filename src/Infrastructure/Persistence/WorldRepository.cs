@@ -9,8 +9,8 @@ namespace Infrastructure.Persistence
 {
     public class WorldRepository : CouchbaseRepository<World>, IWorldRepository
     {
-        public WorldRepository(ICouchbaseContext couchbaseContext, ILogger<CouchbaseRepository<World>> logger, IConfiguration config, IAttributesProcessor _attrProcessor)
-            : base(couchbaseContext, logger, config, _attrProcessor)
+        public WorldRepository(ICouchbaseContext couchbaseContext, ILogger<CouchbaseRepository<World>> logger, IConfiguration config)
+            : base(couchbaseContext, logger, config)
         {
         }
     }
