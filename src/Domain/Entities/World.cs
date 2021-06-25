@@ -1,8 +1,10 @@
 using System;
+using Domain.Common.Attributes;
 using Domain.Common.Interfaces;
 
 namespace Domain.Entities
 {
+    [EntityName("world")]
     public class World : AuditableEntity, ICouchbaseEntity
     {
         public string Name { get; set; }

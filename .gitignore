@@ -452,7 +452,6 @@ $RECYCLE.BIN/
 !.vscode/extensions.json
 *.vscode/*
 repayments.logs
-*.appsettings.json
-src/config/appsettings.json
+/**/*appsettings*.json
 src/config/appsettings.Development.json
-src/config/appsettings.Testing.json
+!src/config/appsettings.Example.json

@@ -18,11 +18,11 @@ services:
   - name: rabbit
     image: jeremiahchienda/oaf-rabbit-starter
     bindings:
-    - port: 5672
-      name: application
-      connectionString: amqp://guest:guest@${host}:${port}/
-    - port: 15672
-      name: admin
+      - port: 5672
+        name: application
+        connectionString: amqp://guest:guest@${host}:${port}/
+      - port: 15672
+        name: admin
   - name: api
     project: src/Api/Api.csproj
     bindings:

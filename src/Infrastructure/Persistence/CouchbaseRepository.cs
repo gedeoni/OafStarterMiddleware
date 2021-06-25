@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Application.Common.Interfaces;
 using Couchbase;
 using Couchbase.KeyValue;
 using Couchbase.Query;
+using Domain.Common.Attributes;
 using Domain.Common.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -17,17 +19,24 @@ namespace Infrastructure.Persistence
         protected readonly ICouchbaseContext _couchbaseContext;
         protected readonly string _entity;
         protected readonly string _bucketName;
-
+        private readonly IAttributesProcessor _attrProcessor;
         protected readonly ILogger<CouchbaseRepository<TEntity>> _logger;
 
-
-
-        protected CouchbaseRepository(ICouchbaseContext couchbaseContext, ILogger<CouchbaseRepository<TEntity>> logger, IConfiguration config)
+        protected CouchbaseRepository(
+            ICouchbaseContext couchbaseContext,
+            ILogger<CouchbaseRepository<TEntity>> logger,
+            IConfiguration config,
+            IAttributesProcessor attrProcessor
+        )
         {
             _couchbaseContext = couchbaseContext;
-            _entity = typeof(TEntity).Name;
             _logger = logger;
             _bucketName = config.GetSection("Couchbase:BucketName").Value;
+            EntityNameAttribute _entityNameAttr = _attrProcessor
+                .GetAttributeInstance<EntityNameAttribute>(typeof(TEntity));
+            _entity = _entityNameAttr != null
+                ? _entityNameAttr.Name
+                : typeof(TEntity).Name;
         }
 
         async public Task<TEntity> FindOneDocument(string id)
