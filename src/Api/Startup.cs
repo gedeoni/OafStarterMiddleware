@@ -1,15 +1,26 @@
 using System.Text.Json;
-using Api.Filters;
-using Application;
-using FluentValidation.AspNetCore;
-using Infrastructure;
+
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+
+using Api.Filters;
+using Api.HealthChecks;
+
+using Application;
+
+using FluentValidation.AspNetCore;
+
+using HealthChecks.UI.Client;
+
+using Infrastructure;
+using System.Collections.Generic;
 
 namespace Api
 {
@@ -31,9 +42,23 @@ namespace Api
                 options.Filters.Add<ApiExceptionFilterAttribute>())
                     .AddFluentValidation();
 
-            services.AddSwaggerGen(c => {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Api", Version = "v1" });
-            });
+            services
+                .AddHealthChecks()
+                .AddCouchbaseHealthCheck(
+                    couchbaseConnectionString: Configuration.GetConnectionString("couchbase:data"),
+                    username: Configuration["Couchbase:UserName"],
+                    password: Configuration["Couchbase:Password"],
+                    failureStatus: HealthStatus.Degraded,
+                    tags: new List<string>(){"Database", "Couchbase"}
+                )
+                .AddRabbitMQ(
+                    rabbitConnectionString: $"amqp://{Configuration["RabbitMQ:UserName"]}:{Configuration["RabbitMQ:Password"]}@{Configuration["RabbitMQ:HostName"]}:{Configuration["RabbitMQ:Port"]}/",
+                    failureStatus: HealthStatus.Degraded,
+                    tags: new List<string>(){"EventBus", "RabbitMQ"}
+                );
+
+            services.AddHealthChecksUI().AddInMemoryStorage();
+            services.AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo { Title = "Api", Version = "v1" }));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -56,20 +81,39 @@ namespace Api
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHealthChecks("health");
+
+                endpoints.MapHealthChecks("health-json", new HealthCheckOptions(){
+                    Predicate = _ => true,
+                    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+                });
+
+                endpoints.MapHealthChecksUI();
+
                 endpoints.MapGet("/", async context =>
                 {
+                    var url = $"{context.Request.Scheme}://{context.Request.Host}";
+
                     if(!env.IsDevelopment())
                     {
                         context.Request.Path = Configuration.GetValue<string>("Oaf-NetCore-Starter-MW:BasePath");
                     }
+
                     var info = new
                     {
-                        name = Configuration.GetValue<string>("Oaf-NetCore-Starter-MW:Name"),
-                        version = Configuration.GetValue<string>("Oaf-NetCore-Starter-MW:Version"),
-                        health = $"{context.Request.Scheme}://{context.Request.Host}{context.Request.Path}actuator/health",
-                        documentation = $"{context.Request.Scheme}://{context.Request.Host}{context.Request.Path}swagger",
+                        Name = Configuration["App:Name"],
+                        Version = Configuration["App:Version"],
+                        HealthChecks =  new {
+                            Health = $"{url}/health",
+                            HealthJson = $"{url}/health-json",
+                            HealthUI = $"{url}/healthchecks-ui#/healthchecks"
+                        },
+                        Documentation = $"{url}/swagger/index.html",
                     };
+
                     var infoJson = JsonSerializer.Serialize(info);
+
+                    context.Response.Headers.Add("Content-Type", "application/json");
                     await context.Response.WriteAsync(infoJson);
                 });
             });
