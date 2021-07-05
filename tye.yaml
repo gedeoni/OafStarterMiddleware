@@ -23,11 +23,11 @@ services:
       connectionString: amqp://guest:guest@${host}:${port}/
     - port: 15672
       name: admin
-  - name: notificationapi
+  - name: api
     project: src/Api/Api.csproj
     bindings:
       - port: 5000
-  - name: worldconsumer
-    project: src/WorldConsumer/WorldConsumer.csproj
-    bindings:
-      - port: 3000
+  # - name: worldconsumer
+  #   project: src/WorldConsumer/WorldConsumer.csproj
+  #   bindings:
+  #     - port: 3000

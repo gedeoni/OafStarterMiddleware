@@ -1,39 +1,43 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Application.Worlds.Commands;
-using Application.Worlds.DTOs;
 using Application.Worlds.Queries;
 using Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
 namespace Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class WorldController : ControllerBase
+    public class WorldsController : ControllerBase
     {
-        private readonly ILogger<WorldController> _logger;
         private readonly IMediator _mediator;
 
-        public WorldController(ILogger<WorldController> logger, IMediator mediator)
+        public WorldsController(IMediator mediator)
         {
-            _logger = logger;
             _mediator = mediator;
         }
 
         [HttpGet]
-        async public Task<List<World>> Index()
+        async public Task<ActionResult<IEnumerable<World>>> GetWorlds()
         {
-            return await _mediator.Send(new GetAllWorlds()).ConfigureAwait(false);
+            var worlds = await _mediator.Send(new GetAllWorldsQuery());
+            return Ok(worlds);
+        }
+
+        [HttpGet("{id}")]
+        async public Task<ActionResult<World>> GetWorld(string id)
+        {
+            var world = await _mediator.Send(new GetWorldByIdQuery() { Id = id });
+            return Ok(world);
         }
 
         [HttpPost]
-        public async Task<World> Create(CreateWorldDto createWorldDto)
+        public async Task<ActionResult<World>> PostWorld(CreateWorldDto createWorldDto)
         {
-            _logger.LogInformation($"{new {Entity=createWorldDto, Message="Received Post world request"}}");
-            return await _mediator.Send(new CreateWorldComand(createWorldDto)).ConfigureAwait(false);
+            var world = await _mediator.Send(new CreateWorldComand(createWorldDto));
+            return new CreatedResult("api/worlds", world);
         }
     }
 }

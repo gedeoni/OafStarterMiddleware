@@ -1,37 +1,39 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Application.Common.Exceptions;
+using Application.Common.Interfaces;
 using Domain.Entities;
 using MediatR;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Application.Worlds.Queries
 {
-    public class GetAllWorlds : IRequest<List<World>>
+    public class GetAllWorldsQuery : IRequest<IEnumerable<World>>
     {
     }
 
-    public class GetAllWorldsHandler : IRequestHandler<GetAllWorlds, List<World>>
+    public class GetAllWorldsHandler : IRequestHandler<GetAllWorldsQuery, IEnumerable<World>>
     {
-        private readonly IConfiguration _configuration;
         private readonly ILogger<GetAllWorldsHandler> _logger;
+        private readonly IWorldRepository _worldRepo;
 
-        public GetAllWorldsHandler(IConfiguration configuration, ILogger<GetAllWorldsHandler> logger)
+        public GetAllWorldsHandler(ILogger<GetAllWorldsHandler> logger, IWorldRepository worldRepo)
         {
-            _configuration = configuration;
+            _worldRepo = worldRepo;
             _logger = logger;
         }
 
-        public Task<List<World>> Handle(GetAllWorlds request, CancellationToken cancellationToken)
+        public async Task<IEnumerable<World>> Handle(GetAllWorldsQuery request, CancellationToken cancellationToken)
         {
-            var name = _configuration["MyWorld:Name"] ?? "Earth Default";
-            var hasLife = bool.Parse(_configuration["MyWorld:HasLife"]);
+            var worlds = (List<World>)await _worldRepo.FindAllDocuments();
 
-            return Task.FromResult(new List<World>() { new World {
-                Name = name,
-                HasLife = hasLife
-            } });
+            if (worlds.Count == 0)
+            {
+                throw new NotFoundException("Worlds Not Found");
+            }
+
+            return worlds;
         }
     }
 }

@@ -1,8 +1,8 @@
-using sdk.MessagePublisher;
 using Application.Common.Interfaces;
 using System.Threading.Tasks;
 using Application.Common.DTOs;
 using Microsoft.Extensions.Configuration;
+using Oaf.Rabbit.Sdk.MessagePublisher;
 
 namespace Infrastructure.RabbitMqEventBus
 {
