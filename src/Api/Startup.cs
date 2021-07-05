@@ -81,9 +81,8 @@ namespace Api
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
-                endpoints.MapHealthChecks("health");
 
-                endpoints.MapHealthChecks("health-json", new HealthCheckOptions(){
+                endpoints.MapHealthChecks("health", new HealthCheckOptions(){
                     Predicate = _ => true,
                     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
                 });
@@ -105,7 +104,6 @@ namespace Api
                         Version = Configuration["App:Version"],
                         HealthChecks =  new {
                             Health = $"{url}/health",
-                            HealthJson = $"{url}/health-json",
                             HealthUI = $"{url}/healthchecks-ui#/healthchecks"
                         },
                         Documentation = $"{url}/swagger/index.html",
